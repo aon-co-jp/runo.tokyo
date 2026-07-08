@@ -1,0 +1,22 @@
+[workspace]
+
+[package]
+name = "runo-tokyo"
+version = "0.0.1"
+edition = "2021"
+description = "OpenRuno: runo.tokyo Webサイト(ひな型) - アプリ紹介ページ + readme-to-rs Web版"
+license = "MPL-2.0"
+
+[dependencies]
+poem = "3"
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+readme-to-rs = { path = "../../open-runo/readme-to-rs" }
+serde = { version = "1", features = ["derive"] }
+
+[lib]
+name = "runo_tokyo"
+path = "src/lib.rs"
+
+[[bin]]
+name = "runo-tokyo"
+path = "src/main.rs"
