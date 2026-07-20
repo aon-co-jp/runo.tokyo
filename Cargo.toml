@@ -10,8 +10,8 @@ license = "MPL-2.0"
 [dependencies]
 poem = "3"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
-readme-to-rs = { path = "../../open-runo/readme-to-rs" }
 serde = { version = "1", features = ["derive"] }
+serde_json = "1"
 
 [lib]
 name = "runo_tokyo"

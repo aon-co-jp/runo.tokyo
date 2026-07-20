@@ -1,8 +1,15 @@
-//! runo.tokyo Webサイト(ひな型)。
+//! runo.tokyo Webサイト。
 //!
 //! 【現状のスコープ】
 //! - open-aruaru/open-runo系列アプリの紹介ページ(アプリ名・説明・GitHubリンク)
-//! - `readme-to-rs`のWeb版(README本文をPOSTすると`.rs`形式のテキストを返す)
+//! - 東京都西部各自治体(あきる野市・旧五日市・桧原村・青梅・奥多摩・羽村・
+//!   福生・昭島・立川・国立・八王子・高尾・日の出町など)の役所・観光案内
+//!   ホームページへのリンク集
+//! - 企業・工場・倉庫事業用地の空き状況をドローン空撮しYouTubeで紹介する
+//!   機能(実際の動画は未収録のため、準備中のプレースホルダーとして掲載)
+//! - `/runo` — エコシステム全体のメタ索引リポジトリ`RUNO`(旧称:
+//!   open-aruaru-runo-iLumi → aon → RUNO)と同内容の「プロジェクトシリーズ
+//!   索引」ページ(`aruaru-tokyo`の`meta_index.rs`/`i18n.rs`を移植、13言語対応)
 //!
 //! 【未実装(今後の拡張、要件メモ参照)】
 //! - AI辞書のGoogleドライブ連携(登録・ダウンロード・読み書きをユーザー自身の
@@ -10,13 +17,64 @@
 //! - PostgreSQL + aruaru-dbのデュアルDB構成
 //! - バージョンレス/バージョン管理/Git管理のトライブリッド方式
 //! - Tauri 2.0デスクトップ版
+//! - ドローン空撮の実際の動画・YouTubeチャンネル(現状はプレースホルダー)
 //!
 //! これらは設計(特にGoogle OAuth連携の認可フロー、デュアルDBの整合性モデル)
 //! を詰めてから着手する。
+//!
+//! 【`readme-to-rs`について(正直な開示)】
+//! 以前このリポジトリには`readme-to-rs`をpath依存で使うWeb版変換機能が
+//! あったが、依存先`F:\open-runo\open-runo\readme-to-rs`が実在しないため
+//! ビルドが壊れていた。実在確認の結果、当該パスは存在しないことを確認した
+//! ため、この機能は削除した(`Cargo.toml`のpath依存も削除済み)。
+//! `readme-to-rs`自体はGitHub上に独立リポジトリとして存在するため、
+//! アプリ紹介一覧(`family_apps`)にはそのGitHubリンクを引き続き掲載する。
 
-use poem::web::Html;
-use poem::{get, handler, post, IntoResponse, Route};
-use serde::Serialize;
+use poem::web::{Html, Query};
+use poem::{get, handler, IntoResponse, Route};
+use serde::{Deserialize, Serialize};
+
+mod i18n;
+mod meta_index;
+
+pub(crate) const STYLE: &str = r#"
+  :root { color-scheme: light dark; --bg:#fdf6ec; --bg-card:#ffffff; --fg:#2c2418; --muted:#8a7f6b; --accent:#ff7a45; --accent-2:#2f6fed; --border:#eadfc9; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#1a1712; --bg-card:#24201a; --fg:#f1ece0; --muted:#b3a893; --accent:#ff9466; --accent-2:#6ea1ff; --border:#3a3327; } }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:"Hiragino Sans","Noto Sans JP",system-ui,sans-serif; background:var(--bg); color:var(--fg); line-height:1.7; }
+  a { color:var(--fg); }
+  a:visited { color:var(--fg); }
+  main { max-width:820px; margin:0 auto; padding:2.5rem 1.25rem 5rem; }
+  header { text-align:center; margin-bottom:1.25rem; }
+  header h1 { font-size:2rem; margin:0 0 .4rem; letter-spacing:-.02em; }
+  header h1 span { color:var(--accent); }
+  header p { color:var(--muted); margin:0; }
+  .quick-links { text-align:center; margin-bottom:2rem; }
+  .quick-links a { display:inline-block; text-decoration:none; font-weight:600; background:var(--accent-2); color:#fff; border-radius:999px; padding:.55rem 1.4rem; margin:.2rem; font-size:.9rem; }
+  section.block { background:var(--bg-card); border:1px solid var(--border); border-radius:.9rem; padding:1.25rem 1.75rem; margin:2rem 0; }
+  section.block h2 { font-size:1.1rem; margin:0 0 .75rem; color:var(--accent-2); }
+  section.block p { margin:0 0 1rem; }
+  section.block p:last-child { margin-bottom:0; }
+  .app-list, .muni-list { margin:0; padding-left:1.2rem; }
+  .app-list li, .muni-list li { margin-bottom:.6rem; }
+  .muni-group { margin-bottom:1.1rem; }
+  .muni-group h3 { font-size:.92rem; margin:0 0 .4rem; color:var(--muted); }
+  .muni-group ul { margin:0; padding-left:1.2rem; }
+  .muni-group li { margin-bottom:.35rem; }
+  .pending { color:var(--muted); font-style:italic; }
+  .drone-placeholder { background:rgba(148,163,184,.12); border:1px dashed var(--border); border-radius:.6rem; padding:1rem 1.25rem; color:var(--muted); font-size:.9rem; }
+  .org-link { text-align:center; margin:2rem 0; }
+  .org-link a { color:var(--accent-2); font-weight:600; text-decoration:none; }
+  footer { text-align:center; color:var(--muted); font-size:.8rem; margin-top:3rem; }
+"#;
+
+pub(crate) fn html_escape(s: &str) -> String {
+    s.replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
+        .replace('\'', "&#39;")
+}
 
 #[derive(Debug, Clone, Serialize)]
 pub struct AppEntry {
@@ -51,42 +109,279 @@ pub fn family_apps() -> Vec<AppEntry> {
     ]
 }
 
-/// アプリ紹介ページのHTML本文を生成する(純粋関数、テスト容易)。
-pub fn app_directory_html() -> String {
-    let mut body = String::from(
-        "<!doctype html><html lang=\"ja\"><head><meta charset=\"utf-8\"><title>runo.tokyo</title></head><body>",
-    );
-    body.push_str("<h1>open-aruaru / open-runo シリーズ</h1><ul>");
-    for app in family_apps() {
-        body.push_str(&format!(
-            "<li><strong>{}</strong>: {} (<a href=\"{}\">GitHub</a>)</li>",
-            app.name, app.description, app.github_url
-        ));
-    }
-    body.push_str("</ul></body></html>");
-    body
+/// 自治体・観光案内サイトへのリンク1件分。`url`が`None`の場合は
+/// URL未提供のため「準備中」表示にする(推測でURLを埋めないこと、
+/// ユーザー指示・2026-07-20)。
+pub struct MuniLink {
+    pub label: &'static str,
+    pub url: Option<&'static str>,
+    pub note: Option<&'static str>,
 }
 
-/// README本文をreadme-to-rsで変換する(Web版readme-to-rsの中核)。
-pub fn convert_readme(markdown: &str) -> String {
-    readme_to_rs::convert_to_rs(markdown)
+/// 自治体グループ(市区町村単位でまとめたリンク群)。
+pub struct MuniGroup {
+    pub area: &'static str,
+    pub links: &'static [MuniLink],
+}
+
+/// 東京都西部各自治体へのリンク集。実在確認済みのURLのみ掲載し、
+/// ユーザーから提供されていないURLは推測せず「準備中」と明記する
+/// (ユーザー指示、2026-07-20および同日の追加提供分)。
+pub const MUNICIPALITY_LINKS: &[MuniGroup] = &[
+    MuniGroup {
+        area: "あきる野市・旧五日市町",
+        links: &[
+            MuniLink { label: "あきる野市(公式)", url: Some("https://www.city.akiruno.tokyo.jp/"), note: None },
+            MuniLink { label: "あきる野市観光案内", url: Some("https://www.city.akiruno.tokyo.jp/kanko/"), note: None },
+            MuniLink {
+                label: "旧五日市町",
+                url: None,
+                note: Some("独立した公式サイトはなく、あきる野市に統合済み。上記あきる野市のリンクで代替"),
+            },
+        ],
+    },
+    MuniGroup {
+        area: "桧原村",
+        links: &[
+            MuniLink { label: "桧原村(公式)", url: None, note: Some("準備中") },
+            MuniLink { label: "桧原村観光案内", url: Some("https://hinohara-kankou.jp/"), note: None },
+        ],
+    },
+    MuniGroup {
+        area: "青梅市",
+        links: &[MuniLink { label: "青梅市(公式)", url: Some("https://www.city.ome.tokyo.jp/"), note: None }],
+    },
+    MuniGroup {
+        area: "奥多摩町",
+        links: &[
+            MuniLink { label: "奥多摩町(公式)", url: Some("https://www.town.okutama.tokyo.jp/index.html"), note: None },
+            MuniLink { label: "奥多摩観光案内", url: Some("https://www.okutama.gr.jp/site/"), note: None },
+        ],
+    },
+    MuniGroup {
+        area: "高尾山・八王子市",
+        links: &[
+            MuniLink { label: "八王子市役所(公式)", url: Some("https://www.city.hachioji.tokyo.jp/"), note: None },
+            MuniLink { label: "高尾山観光案内", url: Some("https://www.hkc.or.jp/takaosan/"), note: None },
+            MuniLink {
+                label: "高尾山・八王子市観光案内",
+                url: Some("https://tokyotouristinfo.com/detail/M0021"),
+                note: None,
+            },
+            MuniLink { label: "高尾登山電鉄", url: Some("https://www.takaotozan.co.jp/"), note: None },
+        ],
+    },
+    MuniGroup {
+        area: "羽村市",
+        links: &[MuniLink { label: "羽村市役所(公式)", url: Some("https://www.city.hamura.tokyo.jp/"), note: None }],
+    },
+    MuniGroup {
+        area: "福生市",
+        links: &[
+            MuniLink { label: "福生市役所(公式)", url: Some("https://www.city.fussa.tokyo.jp/"), note: None },
+            MuniLink {
+                label: "拝島駅(西武鉄道)",
+                url: Some("https://www.seiburailway.jp/railway/station/haijima/"),
+                note: Some("アクセス"),
+            },
+            MuniLink {
+                label: "拝島駅(JR東日本)",
+                url: Some("https://www.jreast.co.jp/estation/stations/1213.html"),
+                note: Some("アクセス"),
+            },
+        ],
+    },
+    MuniGroup {
+        area: "昭島市",
+        links: &[
+            MuniLink { label: "昭島市役所(公式)", url: Some("https://www.city.akishima.lg.jp/"), note: None },
+            MuniLink {
+                label: "拝島駅(西武鉄道)",
+                url: Some("https://www.seiburailway.jp/railway/station/haijima/"),
+                note: Some("アクセス"),
+            },
+            MuniLink {
+                label: "拝島駅(JR東日本)",
+                url: Some("https://www.jreast.co.jp/estation/stations/1213.html"),
+                note: Some("アクセス"),
+            },
+        ],
+    },
+    MuniGroup {
+        area: "立川市",
+        links: &[MuniLink { label: "立川市役所(公式)", url: Some("https://www.city.tachikawa.lg.jp/"), note: None }],
+    },
+    MuniGroup {
+        area: "国立市",
+        links: &[MuniLink { label: "国立市役所(公式)", url: Some("https://www.city.kunitachi.tokyo.jp/index.html"), note: None }],
+    },
+    MuniGroup {
+        area: "日の出町",
+        links: &[MuniLink { label: "日の出町役場(公式)", url: Some("https://www.town.hinode.tokyo.jp/"), note: None }],
+    },
+];
+
+/// ユーザー確定済みの紹介文(そのまま使用、改変しない)。
+const INTRO_PARAGRAPHS: &[&str] = &[
+    "都心から程よい近さの、地方郊外。安くて広い土地を見つけて、巨大な壁埋め込みスピーカー搭載のシアタールーム付き一戸建て注文住宅を建てる——そんな暮らし方はいかがでしょうか。",
+    "素敵な音楽を聴きながら、あるいは素敵な映画を観ながら、オンラインPCで快適にテレワーク・リモートワークをこなす毎日。時にはオーディオカフェのようなカフェレストランにノートパソコンを持参して、テレワーク・リモートワークをする生活も、また格別です。",
+    "親子で楽しくパソコンを教え合いながら過ごすテレワーク・リモートワークの時間もおすすめです。気になることがあれば、その場でGoogle画像検索を使って、親子で一緒に調べてみましょう。",
+    "スマホやタブレット、PCのキーボードでGoogle検索やYouTube検索、ChatGPTへ質問ができるくらいのスキルからでも大丈夫です。Claude Code Desktopを使えば、IT経験が浅くてもアプリやWebサイトの開発が可能になり、フリーランスプログラマーのお仕事もリモートワークでこなせるようになります。",
+];
+
+const GOOGLE_IMAGE_SEARCH_URL: &str = "https://www.google.com/imghp";
+
+fn render_intro_section() -> String {
+    let mut html = String::from(r#"<section class="block" id="intro"><h2>こんな暮らし方はいかがでしょうか</h2>"#);
+    for (i, p) in INTRO_PARAGRAPHS.iter().enumerate() {
+        html.push_str(&format!("<p>{}</p>", html_escape(p)));
+        // 3番目の段落(親子でのGoogle画像検索の話)の直後に、実際のリンクを添える。
+        if i == 2 {
+            html.push_str(&format!(
+                r#"<p>👉 <a href="{url}" target="_blank" rel="noopener">Google画像検索を開く</a>(親子で一緒に調べ物をするときに)</p>"#,
+                url = GOOGLE_IMAGE_SEARCH_URL,
+            ));
+        }
+    }
+    html.push_str("</section>");
+    html
+}
+
+fn render_app_directory_section() -> String {
+    let mut html = String::from(r#"<section class="block" id="apps"><h2>open-aruaru / open-runo シリーズ</h2><ul class="app-list">"#);
+    for app in family_apps() {
+        html.push_str(&format!(
+            "<li><strong>{}</strong>: {} (<a href=\"{}\" target=\"_blank\" rel=\"noopener\">GitHub</a>)</li>",
+            html_escape(app.name),
+            html_escape(app.description),
+            app.github_url
+        ));
+    }
+    html.push_str("</ul></section>");
+    html
+}
+
+fn render_municipality_section() -> String {
+    let mut html = String::from(
+        r#"<section class="block" id="municipalities"><h2>東京都西部 自治体・観光案内リンク集</h2><p>あきる野市・旧五日市・桧原村・青梅・奥多摩・羽村・福生・昭島・立川・国立・八王子・高尾・日の出町など、各自治体の公式サイト・観光案内サイトへのリンクです。URLが未提供の自治体は、推測で埋めず「準備中」と正直に表示しています。</p>"#,
+    );
+    for group in MUNICIPALITY_LINKS {
+        html.push_str(&format!(r#"<div class="muni-group"><h3>{}</h3><ul>"#, html_escape(group.area)));
+        for link in group.links {
+            let line = match (link.url, link.note) {
+                (Some(url), None) => format!(
+                    r#"<li><a href="{url}" target="_blank" rel="noopener">{label}</a></li>"#,
+                    url = url,
+                    label = html_escape(link.label)
+                ),
+                (Some(url), Some(note)) => format!(
+                    r#"<li><a href="{url}" target="_blank" rel="noopener">{label}</a> <span class="pending">({note})</span></li>"#,
+                    url = url,
+                    label = html_escape(link.label),
+                    note = html_escape(note)
+                ),
+                (None, Some(note)) => format!(
+                    r#"<li>{label} <span class="pending">({note})</span></li>"#,
+                    label = html_escape(link.label),
+                    note = html_escape(note)
+                ),
+                (None, None) => format!(r#"<li>{label} <span class="pending">(準備中)</span></li>"#, label = html_escape(link.label)),
+            };
+            html.push_str(&line);
+        }
+        html.push_str("</ul></div>");
+    }
+    html.push_str("</section>");
+    html
+}
+
+fn render_drone_section() -> String {
+    r#"<section class="block" id="drone"><h2>企業・工場・倉庫事業用地のドローン空撮紹介</h2>
+<p>企業・工場・倉庫事業用地の空き状況を実際にドローンで空撮し、YouTubeで紹介する機能を準備しています。</p>
+<div class="drone-placeholder">🚁 準備中: 実際の空撮動画・YouTubeチャンネルは現時点では未収録・未公開です。撮影・公開が完了し次第、ここに動画へのリンクを掲載します。</div>
+</section>"#
+        .to_string()
+}
+
+fn render_runo_link_section() -> String {
+    r#"<section class="block" id="runo-index"><h2>エコシステム全体を見る</h2>
+<p>open-runo / open-aruaru エコシステム全体のプロジェクト一覧(README・PORTING.md・CLAUDE.mdへのリンク付き)は「プロジェクトシリーズ索引」ページでまとめて確認できます。13言語(日本語・英語・中国語・韓国語ほか)に対応しています。</p>
+<div class="org-link"><a href="/runo">📚 プロジェクトシリーズ索引を見る (/runo)</a></div>
+</section>"#
+        .to_string()
+}
+
+/// TOPページのHTML本文を生成する(純粋関数、テスト容易)。
+pub fn top_page_html() -> String {
+    format!(
+        r##"<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>runo.tokyo | 東京都西部の暮らしとテレワーク、open-runoエコシステム</title>
+<meta name="description" content="東京都西部各自治体へのリンク集、企業・工場・倉庫事業用地のドローン空撮紹介、そしてopen-aruaru/open-runoエコシステムのアプリ一覧を掲載するruno.tokyoのTOPページ。Rust + Poem製。">
+<style>{STYLE}</style>
+</head>
+<body>
+<main>
+<header>
+  <h1><span>runo</span>.tokyo</h1>
+  <p>東京都西部の暮らし・テレワークと、open-runoエコシステムの入口</p>
+</header>
+
+<div class="quick-links">
+  <a href="#municipalities">自治体リンク集</a>
+  <a href="#drone">ドローン空撮紹介</a>
+  <a href="/runo">📚 プロジェクトシリーズ</a>
+</div>
+
+{intro}
+
+{municipalities}
+
+{drone}
+
+{apps}
+
+{runo_link}
+
+<footer>&copy; 2026 runo.tokyo (Rust + Poem)</footer>
+</main>
+</body>
+</html>"##,
+        STYLE = STYLE,
+        intro = render_intro_section(),
+        municipalities = render_municipality_section(),
+        drone = render_drone_section(),
+        apps = render_app_directory_section(),
+        runo_link = render_runo_link_section(),
+    )
 }
 
 #[handler]
 fn index_handler() -> impl IntoResponse {
-    Html(app_directory_html())
+    Html(top_page_html())
 }
 
+#[derive(Deserialize)]
+struct LangQuery {
+    lang: Option<String>,
+}
+
+/// `/runo` — エコシステム全体のメタ索引リポジトリ`RUNO`と同内容の
+/// 「プロジェクトシリーズ索引」ページ。
 #[handler]
-fn readme_to_rs_handler(body: String) -> impl IntoResponse {
-    convert_readme(&body)
+async fn runo_index_page(Query(q): Query<LangQuery>) -> Html<String> {
+    let lang = i18n::Lang::parse(q.lang.as_deref());
+    Html(meta_index::render_page(lang, "/runo"))
 }
 
 /// Poemのルーティングを構築する(サーバー起動処理とは分離し、テスト可能にする)。
 pub fn build_app() -> Route {
     Route::new()
         .at("/", get(index_handler))
-        .at("/readme-to-rs", post(readme_to_rs_handler))
+        .at("/runo", get(runo_index_page))
 }
 
 #[cfg(test)]
@@ -95,7 +390,7 @@ mod tests {
 
     #[test]
     fn app_directory_lists_all_family_apps() {
-        let html = app_directory_html();
+        let html = top_page_html();
         for app in family_apps() {
             assert!(html.contains(app.name), "{}がHTMLに含まれていません", app.name);
             assert!(html.contains(app.github_url));
@@ -103,8 +398,72 @@ mod tests {
     }
 
     #[test]
-    fn convert_readme_wraps_lines_in_doc_comments() {
-        let out = convert_readme("# タイトル\n\n本文");
-        assert_eq!(out, "//! # タイトル\n//!\n//! 本文\n");
+    fn top_page_contains_intro_text_verbatim() {
+        let html = top_page_html();
+        for p in INTRO_PARAGRAPHS {
+            assert!(html.contains(p), "紹介文の段落がHTMLに含まれていません: {p}");
+        }
+    }
+
+    #[test]
+    fn top_page_contains_google_image_search_link() {
+        let html = top_page_html();
+        assert!(html.contains(GOOGLE_IMAGE_SEARCH_URL));
+    }
+
+    #[test]
+    fn top_page_contains_provided_municipality_urls_and_pending_notes() {
+        let html = top_page_html();
+        assert!(html.contains("https://www.city.akiruno.tokyo.jp/"));
+        assert!(html.contains("https://www.city.akiruno.tokyo.jp/kanko/"));
+        assert!(html.contains("https://hinohara-kankou.jp/"));
+        assert!(html.contains("https://www.city.ome.tokyo.jp/"));
+        assert!(html.contains("https://www.town.okutama.tokyo.jp/index.html"));
+        assert!(html.contains("https://www.okutama.gr.jp/site/"));
+        assert!(html.contains("https://www.hkc.or.jp/takaosan/"));
+        assert!(html.contains("https://tokyotouristinfo.com/detail/M0021"));
+        assert!(html.contains("https://www.takaotozan.co.jp/"));
+        assert!(html.contains("https://www.city.hachioji.tokyo.jp/"));
+        assert!(html.contains("https://www.town.hinode.tokyo.jp/"));
+        assert!(html.contains("https://www.city.fussa.tokyo.jp/"));
+        assert!(html.contains("https://www.city.hamura.tokyo.jp/"));
+        assert!(html.contains("https://www.seiburailway.jp/railway/station/haijima/"));
+        assert!(html.contains("https://www.jreast.co.jp/estation/stations/1213.html"));
+        assert!(html.contains("https://www.city.akishima.lg.jp/"));
+        assert!(html.contains("https://www.city.tachikawa.lg.jp/"));
+        assert!(html.contains("https://www.city.kunitachi.tokyo.jp/index.html"));
+        assert!(html.contains("羽村市"));
+        assert!(html.contains("準備中"));
+    }
+
+    #[test]
+    fn top_page_links_to_runo_index() {
+        let html = top_page_html();
+        assert!(html.contains(r#"href="/runo""#));
+    }
+
+    #[test]
+    fn top_page_has_drone_placeholder_not_fake_video() {
+        let html = top_page_html();
+        assert!(html.contains("準備中"));
+        assert!(html.contains("ドローン"));
+        assert!(!html.contains("youtube.com/watch"));
+    }
+
+    #[test]
+    fn runo_index_page_lists_projects() {
+        let html = meta_index::render_page(i18n::Lang::Ja, "/runo");
+        for p in meta_index::PROJECTS {
+            assert!(html.contains(p.name), "{}がプロジェクトシリーズ索引に含まれていません", p.name);
+        }
+        assert!(html.contains("aon-co-jp/RUNO"));
+    }
+
+    #[test]
+    fn runo_index_page_supports_lang_switch() {
+        let html_en = meta_index::render_page(i18n::Lang::En, "/runo");
+        assert!(html_en.contains("Project Series Index"));
+        let html_ar = meta_index::render_page(i18n::Lang::Ar, "/runo");
+        assert!(html_ar.contains(r#"dir="rtl""#));
     }
 }
