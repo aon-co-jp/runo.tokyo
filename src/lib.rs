@@ -49,6 +49,8 @@ pub(crate) const STYLE: &str = r#"
   header h1 { font-size:2rem; margin:0 0 .4rem; letter-spacing:-.02em; }
   header h1 span { color:var(--accent); }
   header p { color:var(--muted); margin:0; }
+  .blog-link { text-align:center; font-size:.85rem; margin:0 0 1rem; }
+  .blog-link a { color:var(--accent-2); text-decoration:none; font-weight:600; }
   .quick-links { text-align:center; margin-bottom:2rem; }
   .quick-links a { display:inline-block; text-decoration:none; font-weight:600; background:var(--accent-2); color:#fff; border-radius:999px; padding:.55rem 1.4rem; margin:.2rem; font-size:.9rem; }
   section.block { background:var(--bg-card); border:1px solid var(--border); border-radius:.9rem; padding:1.25rem 1.75rem; margin:2rem 0; }
@@ -223,6 +225,11 @@ const INTRO_PARAGRAPHS: &[&str] = &[
 ];
 
 const GOOGLE_IMAGE_SEARCH_URL: &str = "https://www.google.com/imghp";
+
+/// ユーザー提供のブログ記事(タイトルをリンクテキストにし、URLそのものは
+/// 表示しない、2026-07-20追記。姉妹サイトaruaru.tokyoにも同じリンクを掲載)。
+const BLOG_POST_URL: &str = "https://ameblo.jp/www-aon/entry-12973252437.html";
+const BLOG_POST_TITLE: &str = "プログラム言語やフレームワークなどの全てをRust(Poemやhyper)版に移植するメリット?";
 
 /// 各段落のテーマに沿った検索クエリ(ユーザー提示の例をそのまま使用)。
 /// 段落0(注文住宅・シアタールーム・地方移住)と段落3(Claude Code)は
@@ -405,6 +412,7 @@ pub fn top_page_html() -> String {
 </head>
 <body>
 <main>
+<p class="blog-link"><a href="{blog_url}" target="_blank" rel="noopener">📝 {blog_title}</a></p>
 <header>
   <h1><span>runo</span>.tokyo</h1>
   <p>東京都西部の暮らし・テレワークと、open-runoエコシステムの入口</p>
@@ -433,6 +441,8 @@ pub fn top_page_html() -> String {
 </body>
 </html>"##,
         STYLE = STYLE,
+        blog_url = BLOG_POST_URL,
+        blog_title = html_escape(BLOG_POST_TITLE),
         catchcopy = render_catchcopy_section(),
         intro = render_intro_section(),
         municipalities = render_municipality_section(),
