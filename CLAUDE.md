@@ -66,6 +66,32 @@ DB非依存・1バイナリ完結。
 
 ## HANDOFF(直近の作業ログ、上が最新)
 
+- **2026-07-20(追記)**: TOPページの紹介文4段落それぞれのテーマに沿った
+  「画像検索・Google検索・YouTube検索」3点セットのリンクを追加(追加要望
+  対応)。
+  - `src/lib.rs`: `intro_queries_for_paragraph()`で段落ごとのクエリ例を
+    定義(段落0=「注文住宅 シアタールーム 壁埋め込みスピーカー」/
+    「地方 郊外 移住 テレワーク 一戸建て」の2セット、段落1=「テレワーク
+    リモートワーク カフェ ノートパソコン」、段落2=「親子 パソコン教室
+    テレワーク」、段落3=「Claude Code Desktop 使い方」/「Claude Code
+    フリーランス プログラマー」の2セット、いずれもユーザー提示のクエリ例
+    をそのまま採用)。`percent_encode_query()`でRFC 3986準拠の
+    パーセントエンコード(UTF-8バイト単位、非予約文字`A-Za-z0-9-_.~`
+    以外を`%XX`化)を自前実装し、`render_search_link_set()`で
+    `https://www.google.com/search?tbm=isch&q=<enc>`(画像検索)・
+    `https://www.google.com/search?q=<enc>`(Google検索)・
+    `https://www.youtube.com/results?search_query=<enc>`(YouTube検索)
+    の3リンクを各段落の直後に配置。既存の汎用Google画像検索リンク
+    (`https://www.google.com/imghp`)は段落2の後にそのまま残置。
+  - **検証**: `cargo test`に新規テスト2件
+    (`percent_encode_query_encodes_japanese_and_spaces`・
+    `top_page_contains_contextual_search_link_sets_for_every_paragraph`)
+    を追加し、既存分と合わせて計10件成功。`cargo run --release`で
+    実機起動し、`curl`で取得した実際のTOPページHTMLに、6クエリ全てに
+    ついて画像検索・Google検索・YouTube検索の3URL(パーセントエンコード
+    済み)がそれぞれ実在することをPythonスクリプトで突き合わせ確認済み
+    (単なるビルド成功では終わらせず、実HTML本文を直接検証)。
+
 - **2026-07-20**: 前回セッションがAPI接続エラーで中断した状態
   (`Cargo.toml`のみ変更・未コミット)から再開し、TOPページ本体と
   `/runo`ページを実装完了。

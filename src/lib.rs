@@ -62,6 +62,8 @@ pub(crate) const STYLE: &str = r#"
   .muni-group ul { margin:0; padding-left:1.2rem; }
   .muni-group li { margin-bottom:.35rem; }
   .pending { color:var(--muted); font-style:italic; }
+  .search-links { font-size:.85rem; color:var(--muted); margin:.3rem 0 1.1rem; }
+  .search-links a { color:var(--accent-2); text-decoration:none; font-weight:600; }
   .drone-placeholder { background:rgba(148,163,184,.12); border:1px dashed var(--border); border-radius:.6rem; padding:1rem 1.25rem; color:var(--muted); font-size:.9rem; }
   .org-link { text-align:center; margin:2rem 0; }
   .org-link a { color:var(--accent-2); font-weight:600; text-decoration:none; }
@@ -231,14 +233,55 @@ const INTRO_PARAGRAPHS: &[&str] = &[
 
 const GOOGLE_IMAGE_SEARCH_URL: &str = "https://www.google.com/imghp";
 
+/// 各段落のテーマに沿った検索クエリ(ユーザー提示の例をそのまま使用)。
+/// 段落0(注文住宅・シアタールーム・地方移住)と段落3(Claude Code)は
+/// 2つのクエリ例が提示されているため、それぞれ2セット掲載する。
+fn intro_queries_for_paragraph(i: usize) -> &'static [&'static str] {
+    match i {
+        0 => &["注文住宅 シアタールーム 壁埋め込みスピーカー", "地方 郊外 移住 テレワーク 一戸建て"],
+        1 => &["テレワーク リモートワーク カフェ ノートパソコン"],
+        2 => &["親子 パソコン教室 テレワーク"],
+        3 => &["Claude Code Desktop 使い方", "Claude Code フリーランス プログラマー"],
+        _ => &[],
+    }
+}
+
+/// クエリ文字列をURLのクエリパラメータ用にパーセントエンコードする
+/// (RFC 3986の非予約文字`A-Za-z0-9-_.~`以外をすべて`%XX`化、UTF-8バイト単位)。
+fn percent_encode_query(s: &str) -> String {
+    let mut out = String::with_capacity(s.len() * 3);
+    for b in s.as_bytes() {
+        match b {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => out.push(*b as char),
+            _ => out.push_str(&format!("%{:02X}", b)),
+        }
+    }
+    out
+}
+
+/// 1クエリ分の「画像検索・Google検索・YouTube検索」3点セットのリンクを
+/// 生成する。
+fn render_search_link_set(query: &str) -> String {
+    let q = percent_encode_query(query);
+    format!(
+        r##"<p class="search-links">🔗 「{label}」で調べる: <a href="https://www.google.com/search?tbm=isch&q={q}" target="_blank" rel="noopener">🖼️ 画像検索</a> / <a href="https://www.google.com/search?q={q}" target="_blank" rel="noopener">🔎 Google検索</a> / <a href="https://www.youtube.com/results?search_query={q}" target="_blank" rel="noopener">▶️ YouTube検索</a></p>"##,
+        label = html_escape(query),
+        q = q,
+    )
+}
+
 fn render_intro_section() -> String {
     let mut html = String::from(r#"<section class="block" id="intro"><h2>こんな暮らし方はいかがでしょうか</h2>"#);
     for (i, p) in INTRO_PARAGRAPHS.iter().enumerate() {
         html.push_str(&format!("<p>{}</p>", html_escape(p)));
-        // 3番目の段落(親子でのGoogle画像検索の話)の直後に、実際のリンクを添える。
+        for query in intro_queries_for_paragraph(i) {
+            html.push_str(&render_search_link_set(query));
+        }
+        // 3番目の段落(親子でのGoogle画像検索の話)の直後に、汎用の
+        // Google画像検索トップページへのリンクも併せて残す。
         if i == 2 {
             html.push_str(&format!(
-                r#"<p>👉 <a href="{url}" target="_blank" rel="noopener">Google画像検索を開く</a>(親子で一緒に調べ物をするときに)</p>"#,
+                r#"<p>👉 <a href="{url}" target="_blank" rel="noopener">Google画像検索を開く(汎用)</a>(親子で一緒に調べ物をするときに)</p>"#,
                 url = GOOGLE_IMAGE_SEARCH_URL,
             ));
         }
@@ -409,6 +452,36 @@ mod tests {
     fn top_page_contains_google_image_search_link() {
         let html = top_page_html();
         assert!(html.contains(GOOGLE_IMAGE_SEARCH_URL));
+    }
+
+    #[test]
+    fn percent_encode_query_encodes_japanese_and_spaces() {
+        let encoded = percent_encode_query("注文住宅 シアタールーム");
+        assert!(!encoded.contains(' '), "空白がエンコードされていません: {encoded}");
+        assert!(encoded.contains("%20"), "半角スペースが%20になっていません: {encoded}");
+        assert!(!encoded.chars().any(|c| c == '注' || c == '宅'), "日本語がエンコードされずに残っています: {encoded}");
+    }
+
+    #[test]
+    fn top_page_contains_contextual_search_link_sets_for_every_paragraph() {
+        let html = top_page_html();
+        let all_queries = [
+            "注文住宅 シアタールーム 壁埋め込みスピーカー",
+            "地方 郊外 移住 テレワーク 一戸建て",
+            "テレワーク リモートワーク カフェ ノートパソコン",
+            "親子 パソコン教室 テレワーク",
+            "Claude Code Desktop 使い方",
+            "Claude Code フリーランス プログラマー",
+        ];
+        for query in all_queries {
+            let q = percent_encode_query(query);
+            let isch_url = format!("https://www.google.com/search?tbm=isch&q={q}");
+            let web_url = format!("https://www.google.com/search?q={q}");
+            let yt_url = format!("https://www.youtube.com/results?search_query={q}");
+            assert!(html.contains(&isch_url), "画像検索リンクが見つかりません: {isch_url}");
+            assert!(html.contains(&web_url), "Google検索リンクが見つかりません: {web_url}");
+            assert!(html.contains(&yt_url), "YouTube検索リンクが見つかりません: {yt_url}");
+        }
     }
 
     #[test]
