@@ -179,8 +179,11 @@ pub const MUNICIPALITY_LINKS: &[MuniGroup] = &[
     },
     MuniGroup {
         area: "福生市",
+        links: &[MuniLink { label: "福生市役所(公式)", url: Some("https://www.city.fussa.tokyo.jp/"), note: None }],
+    },
+    MuniGroup {
+        area: "福生市＆昭島市",
         links: &[
-            MuniLink { label: "福生市役所(公式)", url: Some("https://www.city.fussa.tokyo.jp/"), note: None },
             MuniLink {
                 label: "拝島駅(西武鉄道)",
                 url: Some("https://www.seiburailway.jp/railway/station/haijima/"),
@@ -195,19 +198,7 @@ pub const MUNICIPALITY_LINKS: &[MuniGroup] = &[
     },
     MuniGroup {
         area: "昭島市",
-        links: &[
-            MuniLink { label: "昭島市役所(公式)", url: Some("https://www.city.akishima.lg.jp/"), note: None },
-            MuniLink {
-                label: "拝島駅(西武鉄道)",
-                url: Some("https://www.seiburailway.jp/railway/station/haijima/"),
-                note: Some("アクセス"),
-            },
-            MuniLink {
-                label: "拝島駅(JR東日本)",
-                url: Some("https://www.jreast.co.jp/estation/stations/1213.html"),
-                note: Some("アクセス"),
-            },
-        ],
+        links: &[MuniLink { label: "昭島市役所(公式)", url: Some("https://www.city.akishima.lg.jp/"), note: None }],
     },
     MuniGroup {
         area: "立川市",
