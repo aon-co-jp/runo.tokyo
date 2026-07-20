@@ -229,7 +229,11 @@ const GOOGLE_IMAGE_SEARCH_URL: &str = "https://www.google.com/imghp";
 /// ユーザー提供のブログ記事(タイトルをリンクテキストにし、URLそのものは
 /// 表示しない、2026-07-20追記。姉妹サイトaruaru.tokyoにも同じリンクを掲載)。
 const BLOG_POST_URL: &str = "https://ameblo.jp/www-aon/entry-12973252437.html";
-const BLOG_POST_TITLE: &str = "プログラム言語やフレームワークなどの全てをRust(Poemやhyper)版に移植するメリット?";
+const BLOG_POST_TITLE_JA: &str = "プログラム言語やフレームワークなどの全てをRust(Poemやhyper)版に移植するメリット?";
+/// ユーザー指示(2026-07-20)により日英両方で掲載。ブログ本文自体は
+/// 日本語のみだが、リンクのラベルは英語話者にも内容が伝わるよう
+/// 意訳したもの(URLは日英共通、リンク先は変えない)。
+const BLOG_POST_TITLE_EN: &str = "The benefits of migrating everything — programming languages, frameworks, and more — to Rust";
 
 /// 各段落のテーマに沿った検索クエリ(ユーザー提示の例をそのまま使用)。
 /// 段落0(注文住宅・シアタールーム・地方移住)と段落3(Claude Code)は
@@ -412,7 +416,7 @@ pub fn top_page_html() -> String {
 </head>
 <body>
 <main>
-<p class="blog-link"><a href="{blog_url}" target="_blank" rel="noopener">📝 {blog_title}</a></p>
+<p class="blog-link"><a href="{blog_url}" target="_blank" rel="noopener">📝 {blog_title_ja}</a> / <a href="{blog_url}" target="_blank" rel="noopener">{blog_title_en}</a></p>
 <header>
   <h1><span>runo</span>.tokyo</h1>
   <p>東京都西部の暮らし・テレワークと、open-cosmoエコシステムの入口</p>
@@ -442,7 +446,8 @@ pub fn top_page_html() -> String {
 </html>"##,
         STYLE = STYLE,
         blog_url = BLOG_POST_URL,
-        blog_title = html_escape(BLOG_POST_TITLE),
+        blog_title_ja = html_escape(BLOG_POST_TITLE_JA),
+        blog_title_en = html_escape(BLOG_POST_TITLE_EN),
         catchcopy = render_catchcopy_section(),
         intro = render_intro_section(),
         municipalities = render_municipality_section(),
