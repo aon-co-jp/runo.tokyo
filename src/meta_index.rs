@@ -211,6 +211,7 @@ fn render_project_card(p: &Project, s: &crate::i18n::IndexStrings) -> String {
     <button type="button" class="live-fetch-btn" data-repo="{repo}">{btn_label}</button>
     <span class="live-fetch-result" data-repo-result="{repo}"></span>
   </div>
+  <ul class="file-tree" data-repo-tree="{repo}"></ul>
 </article>"#,
         repo = html_escape(p.repo),
         repo_url = repo_url,
@@ -251,6 +252,10 @@ pub const META_INDEX_STYLE: &str = r#"
   .live-fetch-btn { font-size:.78rem; padding:.35rem .9rem; }
   .live-fetch-result { font-size:.78rem; color:var(--muted); }
   .live-fetch-result .ok { color:var(--fg); }
+  ul.file-tree { list-style:none; margin:.6rem 0 0; padding:.6rem .8rem; font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace; font-size:.8rem; background:rgba(148,163,184,.08); border-radius:.5rem; }
+  ul.file-tree li { padding:.15rem 0; }
+  ul.file-tree a { text-decoration:none; color:var(--accent-2); }
+  ul.file-tree .tree-error { color:var(--muted); font-style:italic; }
 "#;
 
 /// `/open-aruaru-runo-iLumi`ページ本体のHTMLを組み立てる。
@@ -293,27 +298,81 @@ pub fn render_page(lang: Lang, canonical_path: &str) -> String {
   <footer>&copy; 2026 runo.tokyo (Rust + Poem) — meta index for the F:\open-runo ecosystem</footer>
 </main>
 <script>
+  // 各リポジトリカードの「最新情報取得」を1関数に切り出す(手動クリックと
+  // 自動一括実行の両方から呼べるようにする)。
+  async function fetchLiveInfo(repo, resultEl) {{
+    resultEl.textContent = {loading_json};
+    try {{
+      const res = await fetch('https://api.github.com/repos/' + repo, {{
+        headers: {{ 'Accept': 'application/vnd.github+json' }}
+      }});
+      if (!res.ok) throw new Error('status ' + res.status);
+      const data = await res.json();
+      const stars = data.stargazers_count;
+      const updated = data.pushed_at || data.updated_at;
+      const branch = data.default_branch;
+      resultEl.innerHTML = '<span class="ok">' + {stars_label_json} + ': ' + stars +
+        ' / ' + {updated_label_json} + ': ' + new Date(updated).toLocaleDateString() +
+        ' / ' + {branch_label_json} + ': ' + branch + '</span>';
+    }} catch (e) {{
+      resultEl.textContent = {fail_json};
+    }}
+  }}
+
+  // リポジトリ直下のファイル/ディレクトリ一覧を、GitHub Contents API から
+  // 取得し、GitHubの「Code」タブのファイル一覧そのままの見た目(📁/📄
+  // アイコン+ファイル名+GitHub上の実ページへのリンク)で表示する
+  // (ユーザー指示、2026-07-20)。公開リポジトリの内容取得なので未認証で
+  // 取得可能・ログイン不要——リンク先も`github.com`の通常ページ
+  // (`html_url`)であり、閲覧側もログイン不要。
+  async function fetchFileTree(repo, treeEl) {{
+    try {{
+      const res = await fetch('https://api.github.com/repos/' + repo + '/contents/', {{
+        headers: {{ 'Accept': 'application/vnd.github+json' }}
+      }});
+      if (!res.ok) throw new Error('status ' + res.status);
+      const entries = await res.json();
+      if (!Array.isArray(entries)) throw new Error('unexpected response shape');
+      entries.sort((a, b) => {{
+        if (a.type !== b.type) return a.type === 'dir' ? -1 : 1;
+        return a.name.localeCompare(b.name);
+      }});
+      treeEl.innerHTML = entries.map(e => {{
+        const icon = e.type === 'dir' ? '📁' : '📄';
+        const name = e.name.replace(/[&<>"']/g, c => ({{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}})[c]);
+        return '<li>' + icon + ' <a href="' + e.html_url + '" target="_blank" rel="noopener">' + name + '</a></li>';
+      }}).join('');
+    }} catch (e) {{
+      treeEl.innerHTML = '<li class="tree-error">' + {tree_fail_json} + '</li>';
+    }}
+  }}
+
   document.querySelectorAll('.live-fetch-btn').forEach(btn => {{
     const repo = btn.getAttribute('data-repo');
     const resultEl = document.querySelector('.live-fetch-result[data-repo-result="' + repo + '"]');
-    btn.addEventListener('click', async () => {{
-      resultEl.textContent = {loading_json};
-      try {{
-        const res = await fetch('https://api.github.com/repos/' + repo, {{
-          headers: {{ 'Accept': 'application/vnd.github+json' }}
-        }});
-        if (!res.ok) throw new Error('status ' + res.status);
-        const data = await res.json();
-        const stars = data.stargazers_count;
-        const updated = data.pushed_at || data.updated_at;
-        const branch = data.default_branch;
-        resultEl.innerHTML = '<span class="ok">' + {stars_label_json} + ': ' + stars +
-          ' / ' + {updated_label_json} + ': ' + new Date(updated).toLocaleDateString() +
-          ' / ' + {branch_label_json} + ': ' + branch + '</span>';
-      }} catch (e) {{
-        resultEl.textContent = {fail_json};
-      }}
+    const treeEl = document.querySelector('.file-tree[data-repo-tree="' + repo + '"]');
+    btn.addEventListener('click', () => {{
+      fetchLiveInfo(repo, resultEl);
+      fetchFileTree(repo, treeEl);
     }});
+  }});
+
+  // TOPページの「/runo」リンクをクリックしてこのページへ遷移してきた瞬間、
+  // 手動でボタンを押さなくても全リポジトリの最新情報(⭐Star数・最終更新・
+  // 既定ブランチ)と、GitHubそのままのファイル一覧を自動的に一括取得する
+  // (ユーザー指示、2026-07-20)。GitHub API(未認証)のレート制限に配慮し、
+  // 同時発火ではなく400ms間隔で順に発火させる(このリポジトリ一覧は
+  // GitHub側のプロジェクト数が少なく現実的な待ち時間で完了する)。
+  document.querySelectorAll('.repo-card').forEach((card, i) => {{
+    const repo = card.getAttribute('data-repo');
+    const resultEl = document.querySelector('.live-fetch-result[data-repo-result="' + repo + '"]');
+    const treeEl = document.querySelector('.file-tree[data-repo-tree="' + repo + '"]');
+    if (repo && resultEl && treeEl) {{
+      setTimeout(() => {{
+        fetchLiveInfo(repo, resultEl);
+        fetchFileTree(repo, treeEl);
+      }}, i * 400);
+    }}
   }});
 </script>
 </body>
@@ -335,5 +394,8 @@ pub fn render_page(lang: Lang, canonical_path: &str) -> String {
         updated_label_json = serde_json::to_string(s.field_updated).unwrap_or_default(),
         branch_label_json = serde_json::to_string(s.field_default_branch).unwrap_or_default(),
         fail_json = serde_json::to_string(s.fetch_fail).unwrap_or_default(),
+        // ファイル一覧取得失敗時の表示も、既存の「取得失敗」文言を流用する
+        // (専用の翻訳文字列を新設せず既存i18n資産を再利用、2026-07-20)。
+        tree_fail_json = serde_json::to_string(s.fetch_fail).unwrap_or_default(),
     )
 }

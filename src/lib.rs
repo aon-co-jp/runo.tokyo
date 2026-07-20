@@ -270,6 +270,52 @@ fn render_search_link_set(query: &str) -> String {
     )
 }
 
+/// サイトのキャッチコピー(ユーザー提示の文言そのまま、改変しない)。
+/// 「巨大な壁埋め込みスピーカー」の暮らし(段落0)とは別に、あきる野市・
+/// 多摩地域から東京・軽井沢・世界をつなぐ「AUDIOを聴きながらのテレワーク」
+/// という切り口を、検索ワードそのものとしてGoogle検索・YouTube検索の
+/// 結果へ誘導する(2026-07-20追記)。
+const CATCHCOPY: &str =
+    "東京都あきる野市と多摩地域周辺の東京と軽井沢と世界をつなぎ、郊外でAUDIOでも心地良く聴きながらリモートワークやテレワークする生活はいかがですか？";
+
+/// 1クエリ分の「Google検索・YouTube検索」2点セット(画像検索は含まない)。
+/// キャッチコピーのような長い文章クエリ向け(2026-07-20追記)。
+fn render_google_youtube_link_set(query: &str) -> String {
+    let q = percent_encode_query(query);
+    format!(
+        r##"<p class="search-links">🔗 「{label}」で調べる: <a href="https://www.google.com/search?q={q}" target="_blank" rel="noopener">🔎 Google検索</a> / <a href="https://www.youtube.com/results?search_query={q}" target="_blank" rel="noopener">▶️ YouTube検索</a></p>"##,
+        label = html_escape(query),
+        q = q,
+    )
+}
+
+/// 1クエリ分の「画像検索・YouTube検索」2点セット(通常のGoogle検索は
+/// 含まない)。写真・映像で見せたいテーマ(親子でのテレワーク風景・
+/// 巨大なスピーカーなど)向け(2026-07-20追記)。
+fn render_image_and_youtube_link_set(query: &str) -> String {
+    let q = percent_encode_query(query);
+    format!(
+        r##"<p class="search-links">🔗 「{label}」で調べる: <a href="https://www.google.com/search?tbm=isch&q={q}" target="_blank" rel="noopener">🖼️ 画像検索</a> / <a href="https://www.youtube.com/results?search_query={q}" target="_blank" rel="noopener">▶️ YouTube検索</a></p>"##,
+        label = html_escape(query),
+        q = q,
+    )
+}
+
+/// TOPページ冒頭のキャッチコピー・検索誘導セクション(ユーザー指示、
+/// 2026-07-20)。
+/// - キャッチコピー本文 → Google検索・YouTube検索リンク
+/// - 「親子でパソコンを教えながらテレワークする」写真 → 画像検索・YouTube検索リンク
+/// - 「巨大なスピーカー」 → 画像検索・YouTube検索リンク
+fn render_catchcopy_section() -> String {
+    format!(
+        r#"<section class="block" id="catchcopy"><h2>runo.tokyoって、どんな場所？</h2><p>{catchcopy}</p>{catchcopy_links}<p>親子でパソコンを教え合いながらテレワーク・リモートワークをする、そんな時間の過ごし方も。</p>{family_links}<p>巨大な壁埋め込みスピーカーで、心地よい音に包まれながら暮らす一戸建て。</p>{speaker_links}</section>"#,
+        catchcopy = html_escape(CATCHCOPY),
+        catchcopy_links = render_google_youtube_link_set(CATCHCOPY),
+        family_links = render_image_and_youtube_link_set("親子 パソコンを教える テレワーク 写真"),
+        speaker_links = render_image_and_youtube_link_set("巨大なスピーカー"),
+    )
+}
+
 fn render_intro_section() -> String {
     let mut html = String::from(r#"<section class="block" id="intro"><h2>こんな暮らし方はいかがでしょうか</h2>"#);
     for (i, p) in INTRO_PARAGRAPHS.iter().enumerate() {
@@ -379,6 +425,8 @@ pub fn top_page_html() -> String {
   <a href="/runo">📚 プロジェクトシリーズ</a>
 </div>
 
+{catchcopy}
+
 {intro}
 
 {municipalities}
@@ -394,6 +442,7 @@ pub fn top_page_html() -> String {
 </body>
 </html>"##,
         STYLE = STYLE,
+        catchcopy = render_catchcopy_section(),
         intro = render_intro_section(),
         municipalities = render_municipality_section(),
         drone = render_drone_section(),
@@ -430,6 +479,36 @@ pub fn build_app() -> Route {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// キャッチコピー本文がそのままページに含まれ、Google検索・YouTube検索
+    /// リンク(画像検索は含まない)が付くことを確認する(2026-07-20追記)。
+    #[test]
+    fn top_page_contains_catchcopy_with_google_and_youtube_links() {
+        let html = top_page_html();
+        assert!(html.contains("東京都あきる野市と多摩地域周辺の東京と軽井沢と世界をつなぎ"));
+        let q = percent_encode_query(CATCHCOPY);
+        assert!(html.contains(&format!("https://www.google.com/search?q={q}")));
+        assert!(html.contains(&format!("https://www.youtube.com/results?search_query={q}")));
+    }
+
+    /// 「巨大なスピーカー」の画像検索・YouTube検索リンクが掲載されていることを確認する。
+    #[test]
+    fn top_page_contains_giant_speaker_image_and_youtube_search_links() {
+        let html = top_page_html();
+        let q = percent_encode_query("巨大なスピーカー");
+        assert!(html.contains(&format!("https://www.google.com/search?tbm=isch&q={q}")));
+        assert!(html.contains(&format!("https://www.youtube.com/results?search_query={q}")));
+    }
+
+    /// 「親子でパソコンを教えながらテレワークする」写真の画像検索・YouTube検索
+    /// リンクが掲載されていることを確認する。
+    #[test]
+    fn top_page_contains_parent_child_telework_photo_search_links() {
+        let html = top_page_html();
+        let q = percent_encode_query("親子 パソコンを教える テレワーク 写真");
+        assert!(html.contains(&format!("https://www.google.com/search?tbm=isch&q={q}")));
+        assert!(html.contains(&format!("https://www.youtube.com/results?search_query={q}")));
+    }
 
     #[test]
     fn app_directory_lists_all_family_apps() {
@@ -538,5 +617,32 @@ mod tests {
         assert!(html_en.contains("Project Series Index"));
         let html_ar = meta_index::render_page(i18n::Lang::Ar, "/runo");
         assert!(html_ar.contains(r#"dir="rtl""#));
+    }
+
+    /// GitHub本家の「Code」タブと同じ見た目(📁/📄+ファイル名+GitHubの実
+    /// ページへのリンク)でファイル一覧を表示するための土台
+    /// (`.file-tree`要素+GitHub Contents APIを叩く`fetchFileTree`関数)が
+    /// ページに存在することを確認する(ユーザー指示、2026-07-20:
+    /// 「重要なREADMEやお引越しポーターや設計思想などのファイルを
+    /// ログインせずにGITHUBの様に見れる様にして」)。
+    #[test]
+    fn runo_index_page_has_github_style_file_tree_fetch() {
+        let html = meta_index::render_page(i18n::Lang::Ja, "/runo");
+        assert!(html.contains(r#"class="file-tree""#));
+        assert!(html.contains("data-repo-tree"));
+        assert!(html.contains("fetchFileTree"));
+        assert!(html.contains("/contents/"));
+    }
+
+    /// TOPページ(`/`)の`/runo`リンクをクリックして遷移した瞬間、手動操作
+    /// 無しに全リポジトリの最新情報を自動取得するJS(`setTimeout`による
+    /// 順次自動発火)が組み込まれていることを確認する(ユーザー指示、
+    /// 2026-07-20: 「TOPページからのリンクをクリックした瞬間に最新の
+    /// リポジトリ一覧を取得して」)。
+    #[test]
+    fn runo_index_page_auto_fetches_all_repos_on_load() {
+        let html = meta_index::render_page(i18n::Lang::Ja, "/runo");
+        assert!(html.contains("querySelectorAll('.repo-card')"));
+        assert!(html.contains("setTimeout"));
     }
 }
