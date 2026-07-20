@@ -66,6 +66,35 @@ DB非依存・1バイナリ完結。
 
 ## HANDOFF(直近の作業ログ、上が最新)
 
+- **2026-07-20(さらに追記) open-runo→open-cosmo改名の反映 + systemd自動復帰の強化**:
+  ユーザー指示により`aon-co-jp/open-runo`リポジトリを実際に
+  `gh repo rename`で`open-cosmo`へ改名(GitHub側は自動リダイレクトが
+  効くが、紹介文言・リンクテキストは改名後の名前に更新)。TOPページの
+  `<title>`・meta description・見出し・紹介文中の「open-runo」表記を
+  「open-cosmo」へ置換(`src/lib.rs`)。`/runo`ページのRPoem・
+  open-web-serverの役割説明文中の「open-runo」も同様に修正
+  (`src/meta_index.rs`)。TOPページの「エコシステム全体を見る」節の
+  文言を、ユーザー指定の「RUNOリポジトリで、RUNOプロジェクトを
+  御紹介しております」という表現+`https://github.com/aon-co-jp/RUNO`
+  への直接リンクへ変更。
+  - **systemd自動復帰の強化(ユーザー指示「サーバーERRORは自動復帰する
+    ように」)**: VPS上の自作Webアプリ全サービス(`runo-tokyo`・
+    `aruaru.tokyo`・`audiocafe-tokyo-rust`・`aon-tokyo-server`・
+    `e-gov-server`・`karu-tokyo-server`・`open-easy-web`)の
+    systemd unitに`RestartSec=2`(未設定だった4サービスへ追加)と
+    `StartLimitIntervalSec=0`(全サービスへ新規追加、既定の「短時間に
+    5回失敗したら諦める」制限を撤廃し、真に無制限リトライで自動復帰
+    し続けるようにした)を統一適用。変更前は各unitファイルを
+    タイムスタンプ付き`.bak-<timestamp>`で退避済み。**実検証**:
+    `runo-tokyo`の実行中プロセスを`kill -9`し、約4秒後に新PID・
+    `systemctl is-active`が`active`・`curl`でHTTP 200が返ることを
+    確認(設定を書いただけでの報告ではなく実クラッシュを起こして復帰を
+    確認済み)。
+  - **検証**: `cargo test`(15件全green)、VPS本番反映
+    (`git pull`→`cargo build --release`→再起動不要、systemdの
+    daemon-reloadは稼働中プロセスを止めない)、本番`https://runo.tokyo/`
+    で「open-cosmo」表記・RUNOリンクの反映を確認済み。
+
 - **2026-07-20(再追記)**: ユーザー指示により、`src/i18n.rs`の
   `LABEL_CLAUDE_JA`定数(`/runo`ページでCLAUDE.mdへのリンクに使う表示
   ラベル、`aruaru-tokyo`からの移植元と同一パターン)を「CLAUDE.md

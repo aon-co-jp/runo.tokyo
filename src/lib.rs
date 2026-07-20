@@ -335,7 +335,7 @@ fn render_intro_section() -> String {
 }
 
 fn render_app_directory_section() -> String {
-    let mut html = String::from(r#"<section class="block" id="apps"><h2>open-aruaru / open-runo シリーズ</h2><ul class="app-list">"#);
+    let mut html = String::from(r#"<section class="block" id="apps"><h2>open-aruaru / open-cosmo シリーズ</h2><ul class="app-list">"#);
     for app in family_apps() {
         html.push_str(&format!(
             "<li><strong>{}</strong>: {} (<a href=\"{}\" target=\"_blank\" rel=\"noopener\">GitHub</a>)</li>",
@@ -392,7 +392,7 @@ fn render_drone_section() -> String {
 
 fn render_runo_link_section() -> String {
     r#"<section class="block" id="runo-index"><h2>エコシステム全体を見る</h2>
-<p>open-runo / open-aruaru エコシステム全体のプロジェクト一覧(README・PORTING.md・CLAUDE.mdへのリンク付き)は「プロジェクトシリーズ索引」ページでまとめて確認できます。13言語(日本語・英語・中国語・韓国語ほか)に対応しています。</p>
+<p><a href="https://github.com/aon-co-jp/RUNO" target="_blank" rel="noopener">RUNO</a>リポジトリで、RUNOプロジェクト(open-cosmo / open-aruaru エコシステム全体のプロジェクト一覧、README・PORTING.md・CLAUDE.mdへのリンク付き)を御紹介しております。「プロジェクトシリーズ索引」ページでもまとめて確認できます(13言語(日本語・英語・中国語・韓国語ほか)対応、ログイン不要でGitHubと同じようにファイル一覧を閲覧できます)。</p>
 <div class="org-link"><a href="/runo">📚 プロジェクトシリーズ索引を見る (/runo)</a></div>
 </section>"#
         .to_string()
@@ -406,8 +406,8 @@ pub fn top_page_html() -> String {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>runo.tokyo | 東京都西部の暮らしとテレワーク、open-runoエコシステム</title>
-<meta name="description" content="東京都西部各自治体へのリンク集、企業・工場・倉庫事業用地のドローン空撮紹介、そしてopen-aruaru/open-runoエコシステムのアプリ一覧を掲載するruno.tokyoのTOPページ。Rust + Poem製。">
+<title>runo.tokyo | 東京都西部の暮らしとテレワーク、open-cosmoエコシステム</title>
+<meta name="description" content="東京都西部各自治体へのリンク集、企業・工場・倉庫事業用地のドローン空撮紹介、そしてopen-aruaru/open-cosmoエコシステムのアプリ一覧を掲載するruno.tokyoのTOPページ。Rust + Poem製。">
 <style>{STYLE}</style>
 </head>
 <body>
@@ -415,7 +415,7 @@ pub fn top_page_html() -> String {
 <p class="blog-link"><a href="{blog_url}" target="_blank" rel="noopener">📝 {blog_title}</a></p>
 <header>
   <h1><span>runo</span>.tokyo</h1>
-  <p>東京都西部の暮らし・テレワークと、open-runoエコシステムの入口</p>
+  <p>東京都西部の暮らし・テレワークと、open-cosmoエコシステムの入口</p>
 </header>
 
 <div class="quick-links">

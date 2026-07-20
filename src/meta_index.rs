@@ -63,7 +63,7 @@ pub const PROJECTS: &[Project] = &[
         has_readme: true,
         has_porting: true,
         has_claude: true,
-        role_ja: "RCosmoと同種のRust製GraphQL Federationプラットフォーム。open-runoを正本として分岐したpoem-runoをさらにリネーム・統合した後継リポジトリ。",
+        role_ja: "RCosmoと同種のRust製GraphQL Federationプラットフォーム。open-cosmo(旧称: open-runo)を正本として分岐したpoem-runoをさらにリネーム・統合した後継リポジトリ。",
     },
     Project {
         name: "aruaru-db",
@@ -151,7 +151,7 @@ pub const PROJECTS: &[Project] = &[
         has_readme: true,
         has_porting: true,
         has_claude: true,
-        role_ja: "Rust + tokio/hyper自前実装のWebサーバー——課金アイテム・金融データを「消失させない」ために設計。open-runo・aruaru-dbと4層防御通信で連携するミッションクリティカル向け。",
+        role_ja: "Rust + tokio/hyper自前実装のWebサーバー——課金アイテム・金融データを「消失させない」ために設計。open-cosmo・aruaru-dbと4層防御通信で連携するミッションクリティカル向け。",
     },
     Project {
         name: "rs-to-readme",
@@ -295,7 +295,7 @@ pub fn render_page(lang: Lang, canonical_path: &str) -> String {
     <a href="/">{back_to_top}</a>
   </div>
 
-  <footer>&copy; 2026 runo.tokyo (Rust + Poem) — meta index for the F:\open-runo ecosystem</footer>
+  <footer>&copy; 2026 runo.tokyo (Rust + Poem) — meta index for the open-cosmo ecosystem</footer>
 </main>
 <script>
   // 各リポジトリカードの「最新情報取得」を1関数に切り出す(手動クリックと
