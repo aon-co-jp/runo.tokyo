@@ -115,7 +115,7 @@ pub const PROJECTS: &[Project] = &[
         has_readme: true,
         has_porting: true,
         has_claude: true,
-        role_ja: "aruaruエコシステム(aruaru-tokyo・aruaru-db・e-gov.info・karu.tokyo等)共通の「AIチャットコマース」応答サービス。リポジトリ名は「LLM」を冠するが、実際のLLM推論への差し替えは今後という正直な開示がREADMEに明記されている。",
+        role_ja: "aruaruエコシステム(aruaru-tokyo・aruaru-db・e-gov.info・karu.tokyo等)共通の「AIチャットコマース」応答サービス。Python向けのAIライブラリとLLMをRust向けの書き直しを開始しました。ベースになったのはこのaruaru-llmです(BERT埋め込みによる意図分類をopencuda-bertで実装済み)。",
         live_url: None,
         live_status: None,
     },
