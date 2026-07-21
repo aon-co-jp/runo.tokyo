@@ -170,6 +170,30 @@ pub const PROJECTS: &[Project] = &[
         role_ja: "runo.tokyoのTOPページ(このリポジトリ自身)。Rust + Poem製、DB非依存・1バイナリ完結。東京都西部各自治体へのリンク集・企業/工場/倉庫事業用地のドローン空撮紹介(準備中)を掲載し、この「プロジェクトシリーズ索引」ページ(`/runo`)自体もここで提供する。",
     },
     Project {
+        name: "RS-Chiketto",
+        repo: "aon-co-jp/RS-Chiketto",
+        has_readme: true,
+        has_porting: true,
+        has_claude: true,
+        role_ja: "Redmine相当のRust製チケット管理システム。open-raid-z等と同時並行で開発中(2026-07-21現在: コード開発途中)。",
+    },
+    Project {
+        name: "RS-Blog",
+        repo: "aon-co-jp/RS-Blog",
+        has_readme: true,
+        has_porting: true,
+        has_claude: true,
+        role_ja: "WordPress相当のRust製ブログシステム。PHPプラグイン互換レイヤーを目指す(2026-07-21現在: コード未着手、CLAUDE.md/PORTING.mdのみ)。",
+    },
+    Project {
+        name: "RS-EC",
+        repo: "aon-co-jp/RS-EC",
+        has_readme: true,
+        has_porting: true,
+        has_claude: true,
+        role_ja: "EC-CUBE相当のRust製ECサイトシステム。実際の決済連携(Stripe等)を目指す(2026-07-21現在: コード未着手、CLAUDE.md/PORTING.mdのみ)。",
+    },
+    Project {
         name: "RUNO (旧称: open-aruaru-runo-iLumi → aon)",
         repo: "aon-co-jp/RUNO",
         has_readme: true,
@@ -257,6 +281,91 @@ pub const META_INDEX_STYLE: &str = r#"
   ul.file-tree a { text-decoration:none; color:var(--accent-2); }
   ul.file-tree .tree-error { color:var(--muted); font-style:italic; }
 "#;
+
+/// `repo`(`owner/repo`)に一致する`Project`を1件だけ探す。
+pub fn find_project(repo: &str) -> Option<&'static Project> {
+    PROJECTS.iter().find(|p| p.repo == repo)
+}
+
+/// サブサービス個別ページ(`/chiketto`等)用に、単一プロジェクトだけを
+/// GitHub風(README/PORTING.md/CLAUDE.mdへのリンク＋ファイル一覧自動取得)
+/// で表示する軽量版ページ。`/runo`の全件一覧ページと同じ`render_project_card`
+/// とJSロジックを再利用する(ユーザー指示、2026-07-21: リンク先で
+/// README・設計思想＆開発方針＆開発環境ルール・お引越しポーターをGitHubの
+/// ように読めるようにする)。
+pub fn render_single_project_page(repo: &str, lang: Lang) -> Option<String> {
+    let project = find_project(repo)?;
+    let s = index_strings(lang);
+    let dir = if lang.is_rtl() { "rtl" } else { "ltr" };
+    let card = render_project_card(project, &s);
+
+    Some(format!(
+        r#"<!DOCTYPE html>
+<html lang="{html_lang}" dir="{dir}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{name} | runo.tokyo</title>
+<style>{STYLE}{META_INDEX_STYLE}</style>
+</head>
+<body class="meta-index">
+<main>
+  <header><h1>{name}</h1></header>
+  <p><a href="/">← runo.tokyo TOPへ戻る</a> ／ <a href="/runo">📚 プロジェクトシリーズ索引全体を見る</a></p>
+  {card}
+  <footer>&copy; 2026 runo.tokyo (Rust + Poem)</footer>
+</main>
+<script>
+  async function fetchLiveInfo(repo, resultEl) {{
+    resultEl.textContent = {loading_json};
+    try {{
+      const res = await fetch('https://api.github.com/repos/' + repo, {{ headers: {{ 'Accept': 'application/vnd.github+json' }} }});
+      if (!res.ok) throw new Error('status ' + res.status);
+      const data = await res.json();
+      resultEl.innerHTML = '<span class="ok">' + {stars_label_json} + ': ' + data.stargazers_count +
+        ' / ' + {updated_label_json} + ': ' + new Date(data.pushed_at || data.updated_at).toLocaleDateString() +
+        ' / ' + {branch_label_json} + ': ' + data.default_branch + '</span>';
+    }} catch (e) {{ resultEl.textContent = {fail_json}; }}
+  }}
+  async function fetchFileTree(repo, treeEl) {{
+    try {{
+      const res = await fetch('https://api.github.com/repos/' + repo + '/contents/', {{ headers: {{ 'Accept': 'application/vnd.github+json' }} }});
+      if (!res.ok) throw new Error('status ' + res.status);
+      const entries = await res.json();
+      if (!Array.isArray(entries)) throw new Error('unexpected response shape');
+      entries.sort((a, b) => {{ if (a.type !== b.type) return a.type === 'dir' ? -1 : 1; return a.name.localeCompare(b.name); }});
+      treeEl.innerHTML = entries.map(e => {{
+        const icon = e.type === 'dir' ? '📁' : '📄';
+        const name = e.name.replace(/[&<>"']/g, c => ({{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}})[c]);
+        return '<li>' + icon + ' <a href="' + e.html_url + '" target="_blank" rel="noopener">' + name + '</a></li>';
+      }}).join('');
+    }} catch (e) {{ treeEl.innerHTML = '<li class="tree-error">' + {tree_fail_json} + '</li>'; }}
+  }}
+  document.querySelectorAll('.live-fetch-btn').forEach(btn => {{
+    const repo = btn.getAttribute('data-repo');
+    const resultEl = document.querySelector('.live-fetch-result[data-repo-result="' + repo + '"]');
+    const treeEl = document.querySelector('.file-tree[data-repo-tree="' + repo + '"]');
+    btn.addEventListener('click', () => {{ fetchLiveInfo(repo, resultEl); fetchFileTree(repo, treeEl); }});
+    setTimeout(() => {{ fetchLiveInfo(repo, resultEl); fetchFileTree(repo, treeEl); }}, 100);
+  }});
+</script>
+</body>
+</html>
+"#,
+        html_lang = lang.html_lang(),
+        dir = dir,
+        name = html_escape(project.name),
+        STYLE = crate::STYLE,
+        META_INDEX_STYLE = META_INDEX_STYLE,
+        card = card,
+        loading_json = serde_json::to_string(s.fetch_loading).unwrap_or_default(),
+        stars_label_json = serde_json::to_string(s.field_stars).unwrap_or_default(),
+        updated_label_json = serde_json::to_string(s.field_updated).unwrap_or_default(),
+        branch_label_json = serde_json::to_string(s.field_default_branch).unwrap_or_default(),
+        fail_json = serde_json::to_string(s.fetch_fail).unwrap_or_default(),
+        tree_fail_json = serde_json::to_string(s.fetch_fail).unwrap_or_default(),
+    ))
+}
 
 /// `/open-aruaru-runo-iLumi`ページ本体のHTMLを組み立てる。
 pub fn render_page(lang: Lang, canonical_path: &str) -> String {

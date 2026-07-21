@@ -394,6 +394,73 @@ fn render_drone_section() -> String {
         .to_string()
 }
 
+/// runo.tokyo配下のパスで公開している自作サブサービス1件分。
+pub struct SubService {
+    pub path: &'static str,
+    pub title: &'static str,
+    pub description: &'static str,
+    pub status: &'static str,
+    /// `owner/repo`形式。READMEをGitHubから読める自前ページを持つ場合に`Some`。
+    pub github_repo: Option<&'static str>,
+}
+
+/// `runo.tokyo/`配下の各サブサービスへのリンク集(ユーザー指示、
+/// 2026-07-21: タイトル付きでURLを紹介し、未完成のものはその旨明記)。
+pub const SUB_SERVICES: &[SubService] = &[
+    SubService {
+        path: "/rgit",
+        title: "RGit",
+        description: "自作Git forge。OTPログイン・アクセス権限管理付き",
+        status: "稼働中",
+        github_repo: None,
+    },
+    SubService {
+        path: "/open-web-server",
+        title: "open-web-server",
+        description: "Apache+Nginx相当のRust製Webサーバー紹介ページ",
+        status: "開発途中(紹介ページのみ公開、本体サーバー化は準備中)",
+        github_repo: None,
+    },
+    SubService {
+        path: "/chiketto",
+        title: "RS-Chiketto",
+        description: "Redmine相当のチケット管理システム",
+        status: "開発途中",
+        github_repo: Some("aon-co-jp/RS-Chiketto"),
+    },
+    SubService {
+        path: "/blog",
+        title: "RS-Blog",
+        description: "WordPress相当のブログシステム",
+        status: "開発途中(未着手)",
+        github_repo: Some("aon-co-jp/RS-Blog"),
+    },
+    SubService {
+        path: "/ec",
+        title: "RS-EC",
+        description: "EC-CUBE相当のECサイトシステム",
+        status: "開発途中(未着手)",
+        github_repo: Some("aon-co-jp/RS-EC"),
+    },
+];
+
+fn render_subservices_section() -> String {
+    let mut html = String::from(
+        r#"<section class="block" id="subservices"><h2>runo.tokyo 内のサブサービス</h2><ul class="app-list">"#,
+    );
+    for s in SUB_SERVICES {
+        html.push_str(&format!(
+            r#"<li><strong><a href="{path}">{title}</a></strong>: {desc} <span class="pending">({status})</span></li>"#,
+            path = s.path,
+            title = html_escape(s.title),
+            desc = html_escape(s.description),
+            status = html_escape(s.status),
+        ));
+    }
+    html.push_str("</ul></section>");
+    html
+}
+
 fn render_runo_link_section() -> String {
     r#"<section class="block" id="runo-index"><h2>エコシステム全体を見る</h2>
 <p><a href="https://github.com/aon-co-jp/RUNO" target="_blank" rel="noopener">RUNO</a>リポジトリで、RUNOプロジェクト(open-cosmo / open-aruaru エコシステム全体のプロジェクト一覧、README・PORTING.md・CLAUDE.mdへのリンク付き)を御紹介しております。「プロジェクトシリーズ索引」ページでもまとめて確認できます(13言語(日本語・英語・中国語・韓国語ほか)対応、ログイン不要でGitHubと同じようにファイル一覧を閲覧できます)。</p>
@@ -438,6 +505,8 @@ pub fn top_page_html() -> String {
 
 {apps}
 
+{subservices}
+
 {runo_link}
 
 <footer>&copy; 2026 runo.tokyo (Rust + Poem)</footer>
@@ -453,6 +522,7 @@ pub fn top_page_html() -> String {
         municipalities = render_municipality_section(),
         drone = render_drone_section(),
         apps = render_app_directory_section(),
+        subservices = render_subservices_section(),
         runo_link = render_runo_link_section(),
     )
 }
@@ -475,11 +545,46 @@ async fn runo_index_page(Query(q): Query<LangQuery>) -> Html<String> {
     Html(meta_index::render_page(lang, "/runo"))
 }
 
+/// サブサービス個別ページの共通ハンドラを生成する。`/chiketto`等のリンク先で
+/// README.md・PORTING.md(お引越しポーター)・CLAUDE.md(設計思想＆開発方針
+/// ＆開発環境ルール)をGitHubと同じように読めるようにする(ユーザー指示、
+/// 2026-07-21)。対象プロジェクトが未着手でリポジトリが存在しない場合は
+/// 404を返す。
+async fn subservice_page(repo: &'static str, q: LangQuery) -> Html<String> {
+    let lang = i18n::Lang::parse(q.lang.as_deref());
+    match meta_index::render_single_project_page(repo, lang) {
+        Some(html) => Html(html),
+        None => Html(format!("<p>{}は現在準備中です。</p>", html_escape(repo))),
+    }
+}
+
+#[handler]
+async fn chiketto_page(Query(q): Query<LangQuery>) -> Html<String> {
+    subservice_page("aon-co-jp/RS-Chiketto", q).await
+}
+
+#[handler]
+async fn blog_page(Query(q): Query<LangQuery>) -> Html<String> {
+    subservice_page("aon-co-jp/RS-Blog", q).await
+}
+
+#[handler]
+async fn ec_page(Query(q): Query<LangQuery>) -> Html<String> {
+    subservice_page("aon-co-jp/RS-EC", q).await
+}
+
 /// Poemのルーティングを構築する(サーバー起動処理とは分離し、テスト可能にする)。
+///
+/// `/rgit`・`/open-web-server`は本アプリではなく、それぞれ実際に稼働する
+/// RGit・open-web-serverへnginxがproxy_passするため、ここではルートを
+/// 定義しない(定義しても本番はnginxが先に振り分ける)。
 pub fn build_app() -> Route {
     Route::new()
         .at("/", get(index_handler))
         .at("/runo", get(runo_index_page))
+        .at("/chiketto", get(chiketto_page))
+        .at("/blog", get(blog_page))
+        .at("/ec", get(ec_page))
 }
 
 #[cfg(test)]
@@ -566,6 +671,31 @@ mod tests {
             assert!(html.contains(&isch_url), "画像検索リンクが見つかりません: {isch_url}");
             assert!(html.contains(&web_url), "Google検索リンクが見つかりません: {web_url}");
             assert!(html.contains(&yt_url), "YouTube検索リンクが見つかりません: {yt_url}");
+        }
+    }
+
+    /// TOPページにサブサービス一覧(タイトル・パス・進捗状況)が掲載され、
+    /// 未完成のものは「開発途中」等と明記されていることを確認する
+    /// (ユーザー指示、2026-07-21)。
+    #[test]
+    fn top_page_lists_subservices_with_status() {
+        let html = top_page_html();
+        for s in SUB_SERVICES {
+            assert!(html.contains(s.path), "{}へのリンクが見つかりません", s.path);
+            assert!(html.contains(s.title), "{}のタイトルが見つかりません", s.title);
+            assert!(html.contains(s.status), "{}の状態表示が見つかりません", s.title);
+        }
+    }
+
+    /// `/chiketto`等のサブサービスページで、README/PORTING.md/CLAUDE.mdへの
+    /// リンクがGitHubのように読めることを確認する。
+    #[test]
+    fn subservice_pages_expose_readme_porting_claude_links() {
+        for repo in ["aon-co-jp/RS-Chiketto", "aon-co-jp/RS-Blog", "aon-co-jp/RS-EC"] {
+            let html = meta_index::render_single_project_page(repo, i18n::Lang::Ja).expect("project should exist");
+            assert!(html.contains(&format!("{repo}/blob/main/README.md")), "{repo}: READMEリンクが見つかりません");
+            assert!(html.contains(&format!("{repo}/blob/main/PORTING.md")), "{repo}: PORTING.mdリンクが見つかりません");
+            assert!(html.contains(&format!("{repo}/blob/main/CLAUDE.md")), "{repo}: CLAUDE.mdリンクが見つかりません");
         }
     }
 
