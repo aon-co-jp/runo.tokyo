@@ -38,6 +38,14 @@ pub struct Project {
     pub has_porting: bool,
     pub has_claude: bool,
     pub role_ja: &'static str,
+    /// ドメイン・サブドメイン・runo.tokyo配下のパスで実際にアクセス
+    /// 可能な場合のURL。未デプロイ・GitHub上のコードのみの場合は`None`
+    /// (ユーザー指示、2026-07-21: 「ドメインやサブドメインにてアクセス
+    /// 出来るものは、そのURLも紹介して」)。
+    pub live_url: Option<&'static str>,
+    /// `live_url`の状態表示(例: "稼働中"・"開発途中")。`live_url`が
+    /// `Some`の場合のみ意味を持つ。
+    pub live_status: Option<&'static str>,
 }
 
 pub const PROJECTS: &[Project] = &[
@@ -48,6 +56,8 @@ pub const PROJECTS: &[Project] = &[
         has_porting: true,
         has_claude: true,
         role_ja: "旧称open-runo。WunderGraph Cosmo(有料版含む)の機能とWEB高速化が基本のRust製プラットフォーム(Cosmoは非依存・互換自前実装)。**Poem・Tauriの機能は含まない**——Poem/Tauri機能が付いた版は姉妹リポジトリRPoem(旧poem-cosmo-tauri)。独自の自己学習AIを搭載(外部LLM契約不要)。",
+        live_url: None,
+        live_status: None,
     },
     Project {
         name: "RFrontEnd",
@@ -56,6 +66,28 @@ pub const PROJECTS: &[Project] = &[
         has_porting: true,
         has_claude: true,
         role_ja: "HTML5/CSS3/TypeScript/React相当を、既存実装のコードを一切流用せず一から開発する複数プロジェクト(RHTML/RCSS/RTypeScript等)を束ねる親リポジトリ。",
+        live_url: None,
+        live_status: None,
+    },
+    Project {
+        name: "RGit",
+        repo: "aon-co-jp/RGit",
+        has_readme: true,
+        has_porting: true,
+        has_claude: true,
+        role_ja: "Gitea(Go製)相当を目指す自己ホスト型Git forge(Rust製)。git smart HTTPのclone/push/fetch・OTPメールログイン・private/public/group単位のきめ細かいアクセス権限管理・ディスク容量に応じた新規リポジトリ作成可否判定を実装済み。Web UI・Issue・Pull Request・Wiki・Webhookは未実装(READMEに明記)。",
+        live_url: Some("https://runo.tokyo/rgit"),
+        live_status: Some("稼働中"),
+    },
+    Project {
+        name: "RJSON",
+        repo: "aon-co-jp/RJSON",
+        has_readme: true,
+        has_porting: true,
+        has_claude: true,
+        role_ja: "寛容(lenient)モードと厳密(strict)モードの両方を1つのクレートから提供するJSON処理ライブラリ。パース結果は常に標準の`serde_json::Value`。RGitのWASMフロントエンド向けに、`serde_json`非依存の軽量`light`モジュール(ブラウザの`JSON.parse`相当)も同梱。",
+        live_url: None,
+        live_status: None,
     },
     Project {
         name: "RPoem",
@@ -64,6 +96,8 @@ pub const PROJECTS: &[Project] = &[
         has_porting: true,
         has_claude: true,
         role_ja: "旧称poem-cosmo-tauri。RCosmoと同じWunderGraph Cosmo互換コアに加え、Poem(RustのWebフレームワーク)・Tauri(デスクトップフロントエンド)の機能を完全互換で再現したアプリケーションサーバー層。RCosmo(open-cosmo/旧称open-runoを正本として分岐)を土台にPoem/Tauri機能を追加した版。",
+        live_url: None,
+        live_status: None,
     },
     Project {
         name: "aruaru-db",
@@ -72,6 +106,8 @@ pub const PROJECTS: &[Project] = &[
         has_porting: true,
         has_claude: true,
         role_ja: "CockroachDBの分散強整合×Snowflakeのストレージ/コンピュート分離×Git-on-SQLバージョン管理を、すべてPure Rustで実装するハイブリッド分散データベース。",
+        live_url: None,
+        live_status: None,
     },
     Project {
         name: "aruaru-llm",
@@ -80,6 +116,8 @@ pub const PROJECTS: &[Project] = &[
         has_porting: true,
         has_claude: true,
         role_ja: "aruaruエコシステム(aruaru-tokyo・aruaru-db・e-gov.info・karu.tokyo等)共通の「AIチャットコマース」応答サービス。リポジトリ名は「LLM」を冠するが、実際のLLM推論への差し替えは今後という正直な開示がREADMEに明記されている。",
+        live_url: None,
+        live_status: None,
     },
     Project {
         name: "aruaru-tokyo",
@@ -88,6 +126,8 @@ pub const PROJECTS: &[Project] = &[
         has_porting: true,
         has_claude: true,
         role_ja: "aruaru.tokyoのTOPページ。Rust + Poem製、DB非依存・1バイナリ完結。audiocafe.tokyo(PHP)とは別ドメイン・別スタックの姉妹サイト。この「プロジェクトシリーズ索引」機能の実装元。",
+        live_url: Some("https://aruaru.tokyo/"),
+        live_status: Some("稼働中"),
     },
     Project {
         name: "audiocafe-tokyo-rust",
@@ -96,14 +136,18 @@ pub const PROJECTS: &[Project] = &[
         has_porting: true,
         has_claude: true,
         role_ja: "audiocafe.tokyoの既存PHPモノリスをRust + Poemへ段階的に移行するプロジェクト(第一段)。既存PHP実装はaudiocafe-tokyoリポジトリのまま並行運用。",
+        live_url: None,
+        live_status: None,
     },
     Project {
         name: "audiocafe.tokyo",
-        repo: "aon-co-jp/audiocafe-tokyo",
+        repo: "aon-co-jp/audiocafe-tokyo-php",
         has_readme: true,
         has_porting: true,
         has_claude: true,
         role_ja: "PHP製のマルチコンテンツサイト。IT/建築系求人情報(aruaru)・女性向け求人/夜間エンターテインメント情報(aruaru-lady)・楽天モバイル関連情報・会社案内などを扱う。",
+        live_url: Some("https://audiocafe.tokyo/"),
+        live_status: Some("稼働中"),
     },
     Project {
         name: "e-gov.info",
@@ -112,6 +156,8 @@ pub const PROJECTS: &[Project] = &[
         has_porting: true,
         has_claude: true,
         role_ja: "行政のデジタル化と、個人〜貿易商社まで対応するオンライン貿易・不動産プラットフォームを、LINEアプリ・WEBサイト・コンビニ端末という複数の入口から統合するプロジェクト。まだサンプル・デモンストレーション段階(READMEに明記)。",
+        live_url: Some("https://e-gov.info/"),
+        live_status: Some("稼働中"),
     },
     Project {
         name: "karu.tokyo",
@@ -120,6 +166,8 @@ pub const PROJECTS: &[Project] = &[
         has_porting: true,
         has_claude: true,
         role_ja: "karu.tokyoのTOPページ。Rust + Poem製、DB非依存の1バイナリ完結サーバー。軽井沢・あきる野市・東京の観光とリモートワーク、IT・AI・AUDIO・貿易産業を紹介。",
+        live_url: Some("https://karu.tokyo/"),
+        live_status: Some("稼働中"),
     },
     Project {
         name: "open-cuda",
@@ -128,6 +176,8 @@ pub const PROJECTS: &[Project] = &[
         has_porting: false,
         has_claude: false,
         role_ja: "OmniGPU設計文書(OmniGPU-Design.md)等を含むGPUランタイム関連プロジェクト(README.mdの代わりにREADME-Japan.md等が存在、標準構成のCLAUDE.md/PORTING.mdは現時点で未整備)。",
+        live_url: None,
+        live_status: None,
     },
     Project {
         name: "open-easy-web",
@@ -136,6 +186,8 @@ pub const PROJECTS: &[Project] = &[
         has_porting: true,
         has_claude: true,
         role_ja: "「第二のKUSANAGI」——アプリのアップロード後にIPアドレスで起動し、ドメイン登録・HTTPS化を簡単に自動適用できる運用ツール(Rust → WebAssembly、フレームワーク不使用)。",
+        live_url: Some("https://easy-web.tokyo/"),
+        live_status: Some("稼働中"),
     },
     Project {
         name: "open-raid-z",
@@ -144,6 +196,8 @@ pub const PROJECTS: &[Project] = &[
         has_porting: true,
         has_claude: true,
         role_ja: "Rust製の実マウント可能なRAID-Z/Z2/Z3ストレージプール実装(ZFS「風」のCoW/チェックサム/スナップショット)。エコシステム開発ルールの正本リポジトリ。",
+        live_url: None,
+        live_status: None,
     },
     Project {
         name: "open-web-server",
@@ -152,6 +206,8 @@ pub const PROJECTS: &[Project] = &[
         has_porting: true,
         has_claude: true,
         role_ja: "Rust + tokio/hyper自前実装のWebサーバー——課金アイテム・金融データを「消失させない」ために設計。open-cosmo・aruaru-dbと4層防御通信で連携するミッションクリティカル向け。",
+        live_url: Some("https://runo.tokyo/open-web-server"),
+        live_status: Some("開発途中(紹介ページのみ公開、本体サーバー化は準備中)"),
     },
     Project {
         name: "rs-to-readme",
@@ -160,6 +216,8 @@ pub const PROJECTS: &[Project] = &[
         has_porting: true,
         has_claude: true,
         role_ja: "Rustクレートの Cargo.toml メタデータからREADME.mdを自動生成するCLIツール(crates.io公開)。",
+        live_url: None,
+        live_status: None,
     },
     Project {
         name: "runo.tokyo",
@@ -168,6 +226,8 @@ pub const PROJECTS: &[Project] = &[
         has_porting: true,
         has_claude: true,
         role_ja: "runo.tokyoのTOPページ(このリポジトリ自身)。Rust + Poem製、DB非依存・1バイナリ完結。東京都西部各自治体へのリンク集・企業/工場/倉庫事業用地のドローン空撮紹介(準備中)を掲載し、この「プロジェクトシリーズ索引」ページ(`/runo`)自体もここで提供する。",
+        live_url: Some("https://runo.tokyo/"),
+        live_status: Some("稼働中"),
     },
     Project {
         name: "RS-Chiketto",
@@ -175,7 +235,9 @@ pub const PROJECTS: &[Project] = &[
         has_readme: true,
         has_porting: true,
         has_claude: true,
-        role_ja: "Redmine相当のRust製チケット管理システム。open-raid-z等と同時並行で開発中(2026-07-21現在: コード開発途中)。",
+        role_ja: "REDMINEのRust＋RPoem版を中心に開発を開始。ハイスピードでハイセキュリティで省メモリなどの新規の特徴を持ちます。まだ開発途中ですが、運用時は、VPSレンタルサーバー費用を安く抑えられる予定で御座います。",
+        live_url: Some("https://runo.tokyo/chiketto"),
+        live_status: Some("開発途中"),
     },
     Project {
         name: "RS-Blog",
@@ -184,6 +246,8 @@ pub const PROJECTS: &[Project] = &[
         has_porting: true,
         has_claude: true,
         role_ja: "WordPress相当のRust製ブログシステム。PHPプラグイン互換レイヤーを目指す(2026-07-21現在: コード未着手、CLAUDE.md/PORTING.mdのみ)。",
+        live_url: Some("https://runo.tokyo/blog"),
+        live_status: Some("開発途中(未着手)"),
     },
     Project {
         name: "RS-EC",
@@ -192,6 +256,8 @@ pub const PROJECTS: &[Project] = &[
         has_porting: true,
         has_claude: true,
         role_ja: "EC-CUBE相当のRust製ECサイトシステム。実際の決済連携(Stripe等)を目指す(2026-07-21現在: コード未着手、CLAUDE.md/PORTING.mdのみ)。",
+        live_url: Some("https://runo.tokyo/ec"),
+        live_status: Some("開発途中(未着手)"),
     },
     Project {
         name: "RUNO (旧称: open-aruaru-runo-iLumi → aon)",
@@ -200,6 +266,8 @@ pub const PROJECTS: &[Project] = &[
         has_porting: true,
         has_claude: true,
         role_ja: "このエコシステム全体の「プロジェクトシリーズ索引」を担うメタリポジトリ。個別のコード実装は持たない。open-aruaru-runo-iLumi → aon → RUNO の順にユーザーがリポジトリ名を変更(内容は都度移行済み)。",
+        live_url: None,
+        live_status: None,
     },
 ];
 
@@ -224,10 +292,19 @@ fn render_project_card(p: &Project, s: &crate::i18n::IndexStrings) -> String {
         file_line(&repo_url, "PORTING.md", s.label_porting, p.has_porting, s.label_none),
         file_line(&repo_url, "CLAUDE.md", s.label_claude, p.has_claude, s.label_none),
     );
+    let live = match (p.live_url, p.live_status) {
+        (Some(url), Some(status)) => format!(
+            r#"<p class="live-link">🔗 <a href="{url}">{url}</a> <span class="pending">({status})</span></p>"#,
+            url = url,
+            status = html_escape(status),
+        ),
+        _ => String::new(),
+    };
     format!(
         r#"<article class="repo-card" data-repo="{repo}">
   <h3><a href="{repo_url}" target="_blank" rel="noopener">📦 {name}</a></h3>
   <p class="role">{role}</p>
+  {live}
   <ul class="file-list">
       {files}
   </ul>
@@ -241,6 +318,7 @@ fn render_project_card(p: &Project, s: &crate::i18n::IndexStrings) -> String {
         repo_url = repo_url,
         name = html_escape(p.name),
         role = html_escape(p.role_ja),
+        live = live,
         files = files,
         btn_label = html_escape(s.btn_fetch_live),
     )
@@ -267,6 +345,8 @@ pub const META_INDEX_STYLE: &str = r#"
   .repo-card h3 { margin:0 0 .4rem; font-size:1.02rem; }
   .repo-card h3 a { text-decoration:none; }
   .repo-card p.role { color:var(--muted); font-size:.85rem; margin:0 0 .75rem; line-height:1.6; }
+  .repo-card p.live-link { font-size:.85rem; margin:0 0 .75rem; }
+  .repo-card p.live-link a { color:var(--accent-2); font-weight:600; }
   ul.file-list { list-style:none; margin:0 0 .75rem; padding:0; font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace; font-size:.82rem; }
   ul.file-list li { padding:.25rem 0; border-bottom:1px dashed var(--border); }
   ul.file-list li:last-child { border-bottom:none; }
