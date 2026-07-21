@@ -781,4 +781,23 @@ mod tests {
         assert!(html.contains("querySelectorAll('.repo-card')"));
         assert!(html.contains("setTimeout"));
     }
+
+    /// クリック時・ページ読み込み時に、紹介文(role)がGitHubのREADME.mdの
+    /// 内容と同期されることを確認する(ユーザー指示、2026-07-22:
+    /// 「クリックした瞬間に、githubの最新といつも同期を取って、いつも
+    /// 最新の内容を紹介して」)。
+    #[test]
+    fn runo_index_page_syncs_role_text_with_github_readme() {
+        let html = meta_index::render_page(i18n::Lang::Ja, "/runo");
+        assert!(html.contains("data-repo-role="));
+        assert!(html.contains("fetchReadmeSummary"));
+        assert!(html.contains("raw.githubusercontent.com"));
+    }
+
+    #[test]
+    fn subservice_page_syncs_role_text_with_github_readme() {
+        let html = meta_index::render_single_project_page("aon-co-jp/RS-Chiketto", i18n::Lang::Ja).expect("project should exist");
+        assert!(html.contains("data-repo-role="));
+        assert!(html.contains("fetchReadmeSummary"));
+    }
 }

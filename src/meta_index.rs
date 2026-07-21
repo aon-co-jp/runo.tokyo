@@ -303,7 +303,7 @@ fn render_project_card(p: &Project, s: &crate::i18n::IndexStrings) -> String {
     format!(
         r#"<article class="repo-card" data-repo="{repo}">
   <h3><a href="{repo_url}" target="_blank" rel="noopener">📦 {name}</a></h3>
-  <p class="role">{role}</p>
+  <p class="role" data-repo-role="{repo}" data-fallback-role="{role}">{role}</p>
   {live}
   <ul class="file-list">
       {files}
@@ -421,12 +421,41 @@ pub fn render_single_project_page(repo: &str, lang: Lang) -> Option<String> {
       }}).join('');
     }} catch (e) {{ treeEl.innerHTML = '<li class="tree-error">' + {tree_fail_json} + '</li>'; }}
   }}
+  // GitHubのREADME.md本文(先頭の意味のある段落)をその場で取得し、紹介文を
+  // 常に最新のGitHubの内容と同期させる(ユーザー指示、2026-07-22:
+  // 「クリックした瞬間に、githubの最新といつも同期を取って、いつも最新の
+  // 内容を紹介して」)。取得できない場合はビルド時点の静的な紹介文
+  // (data-fallback-role)のまま変更しない。
+  function escapeHtmlLocal(s) {{ return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }}
+  async function fetchReadmeSummary(repo, roleEl) {{
+    if (!roleEl) return;
+    for (const branch of ['main', 'master']) {{
+      try {{
+        const res = await fetch('https://raw.githubusercontent.com/' + repo + '/' + branch + '/README.md');
+        if (!res.ok) continue;
+        const text = await res.text();
+        const lines = text.split('\n');
+        let summary = '';
+        for (const line of lines) {{
+          const t = line.trim();
+          if (t === '' || t.startsWith('#') || t.startsWith('>') || t.startsWith('[![') || t.startsWith('![')) continue;
+          summary = t;
+          break;
+        }}
+        if (summary) {{
+          roleEl.innerHTML = escapeHtmlLocal(summary) + ' <span class="pending">(GitHub README同期)</span>';
+        }}
+        return;
+      }} catch (e) {{ /* try next branch */ }}
+    }}
+  }}
   document.querySelectorAll('.live-fetch-btn').forEach(btn => {{
     const repo = btn.getAttribute('data-repo');
     const resultEl = document.querySelector('.live-fetch-result[data-repo-result="' + repo + '"]');
     const treeEl = document.querySelector('.file-tree[data-repo-tree="' + repo + '"]');
-    btn.addEventListener('click', () => {{ fetchLiveInfo(repo, resultEl); fetchFileTree(repo, treeEl); }});
-    setTimeout(() => {{ fetchLiveInfo(repo, resultEl); fetchFileTree(repo, treeEl); }}, 100);
+    const roleEl = document.querySelector('.role[data-repo-role="' + repo + '"]');
+    btn.addEventListener('click', () => {{ fetchLiveInfo(repo, resultEl); fetchFileTree(repo, treeEl); fetchReadmeSummary(repo, roleEl); }});
+    setTimeout(() => {{ fetchLiveInfo(repo, resultEl); fetchFileTree(repo, treeEl); fetchReadmeSummary(repo, roleEl); }}, 100);
   }});
 </script>
 </body>
@@ -536,30 +565,64 @@ pub fn render_page(lang: Lang, canonical_path: &str) -> String {
     }}
   }}
 
+  // GitHubのREADME.md本文(先頭の意味のある段落)をその場で取得し、紹介文を
+  // 常に最新のGitHubの内容と同期させる(ユーザー指示、2026-07-22:
+  // 「クリックした瞬間に、githubの最新といつも同期を取って、いつも最新の
+  // 内容を紹介して」)。取得できない場合はビルド時点の静的な紹介文
+  // (data-fallback-role)のまま変更しない。
+  function escapeHtmlLocal(s) {{ return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }}
+  async function fetchReadmeSummary(repo, roleEl) {{
+    if (!roleEl) return;
+    for (const branch of ['main', 'master']) {{
+      try {{
+        const res = await fetch('https://raw.githubusercontent.com/' + repo + '/' + branch + '/README.md');
+        if (!res.ok) continue;
+        const text = await res.text();
+        const lines = text.split('\n');
+        let summary = '';
+        for (const line of lines) {{
+          const t = line.trim();
+          if (t === '' || t.startsWith('#') || t.startsWith('>') || t.startsWith('[![') || t.startsWith('![')) continue;
+          summary = t;
+          break;
+        }}
+        if (summary) {{
+          roleEl.innerHTML = escapeHtmlLocal(summary) + ' <span class="pending">(GitHub README同期)</span>';
+        }}
+        return;
+      }} catch (e) {{ /* try next branch */ }}
+    }}
+  }}
+
   document.querySelectorAll('.live-fetch-btn').forEach(btn => {{
     const repo = btn.getAttribute('data-repo');
     const resultEl = document.querySelector('.live-fetch-result[data-repo-result="' + repo + '"]');
     const treeEl = document.querySelector('.file-tree[data-repo-tree="' + repo + '"]');
+    const roleEl = document.querySelector('.role[data-repo-role="' + repo + '"]');
     btn.addEventListener('click', () => {{
       fetchLiveInfo(repo, resultEl);
       fetchFileTree(repo, treeEl);
+      fetchReadmeSummary(repo, roleEl);
     }});
   }});
 
   // TOPページの「/runo」リンクをクリックしてこのページへ遷移してきた瞬間、
   // 手動でボタンを押さなくても全リポジトリの最新情報(⭐Star数・最終更新・
-  // 既定ブランチ)と、GitHubそのままのファイル一覧を自動的に一括取得する
-  // (ユーザー指示、2026-07-20)。GitHub API(未認証)のレート制限に配慮し、
-  // 同時発火ではなく400ms間隔で順に発火させる(このリポジトリ一覧は
-  // GitHub側のプロジェクト数が少なく現実的な待ち時間で完了する)。
+  // 既定ブランチ・README紹介文)と、GitHubそのままのファイル一覧を
+  // 自動的に一括取得する(ユーザー指示、2026-07-20/2026-07-22)。
+  // GitHub API(未認証)のレート制限に配慮し、同時発火ではなく400ms間隔で
+  // 順に発火させる(このリポジトリ一覧はGitHub側のプロジェクト数が少なく
+  // 現実的な待ち時間で完了する)。
   document.querySelectorAll('.repo-card').forEach((card, i) => {{
     const repo = card.getAttribute('data-repo');
     const resultEl = document.querySelector('.live-fetch-result[data-repo-result="' + repo + '"]');
     const treeEl = document.querySelector('.file-tree[data-repo-tree="' + repo + '"]');
+    const roleEl = document.querySelector('.role[data-repo-role="' + repo + '"]');
     if (repo && resultEl && treeEl) {{
       setTimeout(() => {{
         fetchLiveInfo(repo, resultEl);
         fetchFileTree(repo, treeEl);
+        fetchReadmeSummary(repo, roleEl);
       }}, i * 400);
     }}
   }});
