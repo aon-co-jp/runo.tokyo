@@ -47,7 +47,7 @@ pub const PROJECTS: &[Project] = &[
         has_readme: true,
         has_porting: true,
         has_claude: true,
-        role_ja: "Rust製GraphQL Federationプラットフォーム(Poem/Tauri/Cosmoは非依存・互換自前実装)。WunderGraph Cosmoの有料版機能をOSS・Pure Rustで実現し、独自の自己学習AIを搭載(外部LLM契約不要)。姉妹リポジトリpoem-cosmo-tauriと並行開発。",
+        role_ja: "旧称open-runo。WunderGraph Cosmo(有料版含む)の機能とWEB高速化が基本のRust製プラットフォーム(Cosmoは非依存・互換自前実装)。**Poem・Tauriの機能は含まない**——Poem/Tauri機能が付いた版は姉妹リポジトリRPoem(旧poem-cosmo-tauri)。独自の自己学習AIを搭載(外部LLM契約不要)。",
     },
     Project {
         name: "RFrontEnd",
@@ -63,7 +63,7 @@ pub const PROJECTS: &[Project] = &[
         has_readme: true,
         has_porting: true,
         has_claude: true,
-        role_ja: "RCosmoと同種のRust製GraphQL Federationプラットフォーム。open-cosmo(旧称: open-runo)を正本として分岐したpoem-runoをさらにリネーム・統合した後継リポジトリ。",
+        role_ja: "旧称poem-cosmo-tauri。RCosmoと同じWunderGraph Cosmo互換コアに加え、Poem(RustのWebフレームワーク)・Tauri(デスクトップフロントエンド)の機能を完全互換で再現したアプリケーションサーバー層。RCosmo(open-cosmo/旧称open-runoを正本として分岐)を土台にPoem/Tauri機能を追加した版。",
     },
     Project {
         name: "aruaru-db",
