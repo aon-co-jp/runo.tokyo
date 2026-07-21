@@ -245,9 +245,9 @@ pub const PROJECTS: &[Project] = &[
         has_readme: true,
         has_porting: true,
         has_claude: true,
-        role_ja: "WordPress相当のRust製ブログシステム。PHPプラグイン互換レイヤーを目指す(2026-07-21現在: コード未着手、CLAUDE.md/PORTING.mdのみ)。",
+        role_ja: "WordPressのRust＋RPoem版です。開発を開始。ハイスピードでハイセキュリティで省メモリなどの新規の特徴を持ちます。まだ開発途中ですが、運用時は、VPSレンタルサーバー費用を安く抑えられる予定で御座います。",
         live_url: Some("https://runo.tokyo/blog"),
-        live_status: Some("開発途中(未着手)"),
+        live_status: Some("開発途中"),
     },
     Project {
         name: "RS-EC",
