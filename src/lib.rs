@@ -699,6 +699,17 @@ mod tests {
         }
     }
 
+    /// 「プロジェクトのご利用」ボックスが、ファイル説明とは独立して
+    /// 日英併記のリンク(サイトを開く/GitHubで入手)のみを持つことを確認する
+    /// (ユーザー指示、2026-07-22)。
+    #[test]
+    fn project_cards_have_usage_box_separate_from_file_links() {
+        let html = meta_index::render_page(i18n::Lang::Ja, "/runo");
+        assert!(html.contains("プロジェクトのご利用 / Project Usage"));
+        assert!(html.contains("Get on GitHub"));
+        assert!(html.contains("class=\"usage-box\""));
+    }
+
     #[test]
     fn top_page_contains_provided_municipality_urls_and_pending_notes() {
         let html = top_page_html();

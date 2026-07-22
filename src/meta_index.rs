@@ -300,11 +300,34 @@ fn render_project_card(p: &Project, s: &crate::i18n::IndexStrings) -> String {
         ),
         _ => String::new(),
     };
+    // 「プロジェクトのご利用」ボックス: ファイル説明(README/PORTING/CLAUDE)とは
+    // 独立させ、利用に特化したリンクのみを日英併記で置く(ユーザー指示、
+    // 2026-07-22)。
+    let site_button = match p.live_url {
+        Some(url) => format!(
+            r#"<a class="usage-btn" href="{url}">🌐 サイトを開く / Open Site</a>"#,
+            url = url,
+        ),
+        None => String::new(),
+    };
+    let usage_box = format!(
+        r#"<div class="usage-box">
+    <strong>🚀 プロジェクトのご利用 / Project Usage</strong>
+    <p>このサイトで実際に使う、またはGitHubからダウンロードしてご利用いただけます。<br>Use it live on this site, or download it from GitHub.</p>
+    <div class="usage-links">
+      {site_button}
+      <a class="usage-btn" href="{repo_url}" target="_blank" rel="noopener">⬇️ GitHubで入手 / Get on GitHub</a>
+    </div>
+  </div>"#,
+        site_button = site_button,
+        repo_url = repo_url,
+    );
     format!(
         r#"<article class="repo-card" data-repo="{repo}">
   <h3><a href="{repo_url}" target="_blank" rel="noopener">📦 {name}</a></h3>
   <p class="role" data-repo-role="{repo}" data-fallback-role="{role}">{role}</p>
   {live}
+  {usage_box}
   <ul class="file-list">
       {files}
   </ul>
@@ -319,6 +342,7 @@ fn render_project_card(p: &Project, s: &crate::i18n::IndexStrings) -> String {
         name = html_escape(p.name),
         role = html_escape(p.role_ja),
         live = live,
+        usage_box = usage_box,
         files = files,
         btn_label = html_escape(s.btn_fetch_live),
     )
@@ -347,6 +371,11 @@ pub const META_INDEX_STYLE: &str = r#"
   .repo-card p.role { color:var(--muted); font-size:.85rem; margin:0 0 .75rem; line-height:1.6; }
   .repo-card p.live-link { font-size:.85rem; margin:0 0 .75rem; }
   .repo-card p.live-link a { color:var(--accent-2); font-weight:600; }
+  .usage-box { background:rgba(47,111,237,.07); border:1px solid var(--border); border-radius:.6rem; padding:.75rem .9rem; margin:0 0 .9rem; font-size:.85rem; }
+  .usage-box strong { font-size:.88rem; }
+  .usage-box p { margin:.35rem 0 .6rem; color:var(--muted); line-height:1.5; }
+  .usage-links { display:flex; gap:.5rem; flex-wrap:wrap; }
+  .usage-btn { display:inline-block; text-decoration:none; background:var(--accent-2); color:#fff; border-radius:999px; padding:.35rem 1rem; font-size:.82rem; font-weight:600; }
   ul.file-list { list-style:none; margin:0 0 .75rem; padding:0; font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace; font-size:.82rem; }
   ul.file-list li { padding:.25rem 0; border-bottom:1px dashed var(--border); }
   ul.file-list li:last-child { border-bottom:none; }
