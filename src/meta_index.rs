@@ -85,7 +85,7 @@ pub const PROJECTS: &[Project] = &[
         has_readme: true,
         has_porting: true,
         has_claude: true,
-        role_ja: "GitbucketのGo言語版のRust＋RPoem版の新規開発を開始。git smart HTTPのclone/push/fetch・OTPメールログイン・private/public/group単位のきめ細かいアクセス権限管理・ディスク容量に応じた新規リポジトリ作成可否判定を実装済み。Web UI・Issue・Pull Request・Wiki・Webhookは未実装(READMEに明記)。(開発開始日: 2026-07-21)",
+        role_ja: "Giteaが持つ機能のうち、まずgit clone/push・OTPログイン・アクセス制御・README閲覧機能だけを実装した、Go言語版GiteaのRust＋RPoem版です。元の機能を素直に移植致しました。ディスク容量に応じた新規リポジトリ作成可否判定も実装済み。Issue・Pull Request・Wiki・Webhookは未実装(READMEに明記)。(開発開始日: 2026-07-21)",
         live_url: Some("https://runo.tokyo/rgit"),
         live_status: Some("稼働中"),
     },
