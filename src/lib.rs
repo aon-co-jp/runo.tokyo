@@ -415,6 +415,13 @@ pub const SUB_SERVICES: &[SubService] = &[
         github_repo: None,
     },
     SubService {
+        path: "/rs-sync",
+        title: "RS-Sync",
+        description: "GitHub/RGit/Gitea/Gitbucket間のリポジトリ同期・バックアップツール",
+        status: "稼働中(MVP、GitHubプロバイダのみ実機検証済み)",
+        github_repo: Some("aon-co-jp/RS-Sync"),
+    },
+    SubService {
         path: "/open-web-server",
         title: "open-web-server",
         description: "Apache+Nginx相当のRust製Webサーバー紹介ページ",
