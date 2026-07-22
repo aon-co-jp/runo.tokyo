@@ -408,8 +408,8 @@ pub struct SubService {
 /// 2026-07-21: タイトル付きでURLを紹介し、未完成のものはその旨明記)。
 pub const SUB_SERVICES: &[SubService] = &[
     SubService {
-        path: "/rgit",
-        title: "RGit",
+        path: "/rs-git",
+        title: "RS-Git",
         description: "自作Git forge。OTPログイン・アクセス権限管理付き",
         status: "稼働中",
         github_repo: None,
@@ -417,7 +417,7 @@ pub const SUB_SERVICES: &[SubService] = &[
     SubService {
         path: "/rs-sync",
         title: "RS-Sync",
-        description: "GitHub/RGit/Gitea/Gitbucket間のリポジトリ同期・バックアップツール",
+        description: "GitHub/RS-Git/Gitea/Gitbucket間のリポジトリ同期・バックアップツール",
         status: "稼働中(MVP、GitHubプロバイダのみ実機検証済み)",
         github_repo: Some("aon-co-jp/RS-Sync"),
     },
@@ -582,8 +582,8 @@ async fn ec_page(Query(q): Query<LangQuery>) -> Html<String> {
 
 /// Poemのルーティングを構築する(サーバー起動処理とは分離し、テスト可能にする)。
 ///
-/// `/rgit`・`/open-web-server`は本アプリではなく、それぞれ実際に稼働する
-/// RGit・open-web-serverへnginxがproxy_passするため、ここではルートを
+/// `/rs-git`・`/open-web-server`は本アプリではなく、それぞれ実際に稼働する
+/// RS-Git・open-web-serverへnginxがproxy_passするため、ここではルートを
 /// 定義しない(定義しても本番はnginxが先に振り分ける)。
 pub fn build_app() -> Route {
     Route::new()
