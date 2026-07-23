@@ -33,6 +33,44 @@ Organizationではなく通常のUserアカウント**であり(`GET /orgs/aon-c
 は`404`)、代わりに`GET /users/aon-co-jp/repos`(User版、ページネーション
 対応)を使う実装に変更した。認証不要の公開エンドポイントのみ使用。
 
+## 配布状況の紹介(`/runo`ページ、2026-07-24追加)
+
+各プロジェクトカードに「📦 配布状況」セクションを追加した。実際に各
+リポジトリの`install.sh`/`install.ps1`/`.github/workflows/release.yml`の
+有無、および`gh release list -R aon-co-jp/<repo>`で実際に公開されている
+GitHub Releaseの存在を確認した上で、`meta_index::Project::distribution`
+(静的フィールド)に反映している(推測で「完成」とは書いていない)。
+
+- **Windows/Linux版がダウンロード可能**(3点セット+公開Release実在を
+  確認済み): RPoem・RS-Git・RS-Red・RS-Blog・RS-EC・open-web-server
+  (いずれも`https://github.com/aon-co-jp/<repo>/releases/latest`への
+  直接リンクをカードに表示)。
+- **インストーラースクリプトは整備済みだが公開Releaseはまだ無い**
+  (CI失敗・タグ未push等、正直にその理由をカードへ記載): aruaru-db・
+  open-raid-z(v0.1.0タグはpush済みだがRelease自動ビルドがCIで失敗中、
+  修正済みで再タグでの検証待ち)・RS-LinkFusion(3点セット整備済み・
+  タグ未push)・RS-Guard・RS-Ops・RS-Sync(install.sh/ps1のみで
+  release.yml未整備)。
+- **Android対応**: 唯一`open-web-server`がKotlin/Gradleシェル+APK生成
+  (`app-debug.apk`)まで到達しているが、`adb`が`unauthorized`を返し続け
+  実機/エミュレータでの動作確認は未完了——「開発中」であって
+  「配布可能」ではないと正直に表示する。RS-Redは`cargo ndk`での
+  クロスコンパイル確認のみ(APK化は未着手)。他のリポジトリはAndroid
+  対応に未着手。
+- **配布状況セクション自体を表示しない**: ライブラリ専用クレート等、
+  エンドユーザーが実行する配布物を持たないプロジェクト(RS-JSON・
+  rs-to-readme・runo-scanner等、`distribution: None`)。
+
+**自動更新機能(`github_cache.rs`)との役割分担**: 配布状況(インストーラー
+の有無・GitHub Release実在)は`meta_index::Project`側の静的フィールドと
+して管理する方針を選んだ(GitHub APIで自動検出する`GET /repos/<repo>/
+releases/latest`も技術的には可能だが、未認証GitHub APIのレート制限が
+60req/時しかなく、既存の`github_cache.rs`が使う「全リポジトリまとめて
+1〜2リクエスト」方式と異なりリポジトリ数だけ個別リクエストが必要になる
+——配布状況は更新頻度が低い情報のため、この制約下では静的管理の方が
+妥当と判断した、詳細は`src/meta_index.rs`の`Distribution`構造体コメント
+参照)。
+
 ## 未実装(今後の拡張)
 
 - AI辞書のGoogleドライブ連携(ユーザー自身のGoogleドライブで辞書を管理)
@@ -84,3 +122,37 @@ Honest note: `aon-co-jp` turned out to be a regular GitHub **user** account,
 not an Organization (`GET /orgs/aon-co-jp` returns 404), so this feature
 uses the `GET /users/aon-co-jp/repos` endpoint rather than the
 organization-repos endpoint originally assumed.
+
+### Distribution status (added 2026-07-24)
+
+Each project card now shows a "📦 Distribution" box, populated from a
+static `distribution` field on `meta_index::Project` after actually
+checking each repo for `install.sh`/`install.ps1`/
+`.github/workflows/release.yml` and real published GitHub Releases (via
+`gh release list`) — nothing is marked "ready" from a guess.
+
+- **Windows/Linux downloads available** (installer trio + confirmed
+  public Release): RPoem, RS-Git, RS-Red, RS-Blog, RS-EC,
+  open-web-server — each links straight to
+  `https://github.com/aon-co-jp/<repo>/releases/latest`.
+- **Installer scripts exist but no public Release yet** (honestly
+  explained per repo): aruaru-db and open-raid-z (v0.1.0 tag pushed but
+  the release-build CI is currently failing; fix pushed, re-tag
+  verification pending), RS-LinkFusion (trio ready, tag not pushed
+  yet), RS-Guard / RS-Ops / RS-Sync (install.sh/ps1 only, no
+  release.yml yet).
+- **Android**: only `open-web-server` has reached Kotlin/Gradle shell +
+  APK build (`app-debug.apk`), but `adb` keeps returning `unauthorized`
+  so on-device/emulator verification is incomplete — shown as "in
+  development", not "downloadable". RS-Red has only confirmed
+  cross-compilation via `cargo ndk` (no APK yet). Other repos haven't
+  started Android work.
+- **No distribution box at all** for library-only crates with no
+  end-user binary (RS-JSON, rs-to-readme, runo-scanner, etc.,
+  `distribution: None`).
+
+This is deliberately a static field rather than a periodic GitHub API
+poll: unauthenticated GitHub API calls are capped at 60/hour, and
+checking `releases/latest` per repo (unlike the existing bulk
+`GET /users/aon-co-jp/repos` call) would need one request per repo for
+information that changes far less often than descriptions/stars.

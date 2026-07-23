@@ -802,6 +802,28 @@ mod tests {
         assert!(html.contains("aon-co-jp/RUNO"));
     }
 
+    /// 2026-07-23追加: 「配布状況」セクションが、実際にGitHub Releaseが
+    /// 公開されているプロジェクト(open-web-server)ではダウンロードリンク
+    /// 付きで表示され、配布物を持たないライブラリ専用プロジェクト
+    /// (RS-JSON)では「配布状況」セクション自体が描画されないことを確認する。
+    #[test]
+    fn runo_index_page_shows_distribution_status_for_installable_projects_only() {
+        let html = meta_index::render_page(i18n::Lang::Ja, "/runo");
+        assert!(
+            html.contains("https://github.com/aon-co-jp/open-web-server/releases/latest"),
+            "open-web-serverのReleaseダウンロードリンクが見つかりません"
+        );
+        assert!(html.contains("Android"), "Android対応状況の記載が見つかりません");
+        assert!(html.contains("配布状況"), "配布状況セクションの見出しが見つかりません");
+
+        // RS-JSON(ライブラリ専用クレート、配布物を持たない)のカード内には
+        // 配布状況ボックス自体が出ないことを確認する。
+        let rs_json_start = html.find("aon-co-jp/RS-JSON").expect("RS-JSONカードが見つかりません");
+        let rs_json_end = html[rs_json_start..].find("</article>").map(|i| rs_json_start + i).unwrap_or(html.len());
+        let rs_json_card = &html[rs_json_start..rs_json_end];
+        assert!(!rs_json_card.contains("dist-box"), "配布物を持たないRS-JSONに配布状況ボックスが表示されています");
+    }
+
     /// 2026-07-22のGitHubリポジトリ改名(RS-Chiketto → RS-Red)が
     /// `/runo`ページ・PROJECTS配列に反映されており、旧名のリポジトリ参照が
     /// 残っていないことを確認する。

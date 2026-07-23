@@ -66,6 +66,82 @@ DB非依存・1バイナリ完結。
 
 ## HANDOFF(直近の作業ログ、上が最新)
 
+- **2026-07-24 `/runo`ページの各プロジェクトカードに「配布状況」セクションを追加
+  + 開発状況の紹介文を最新化(ユーザー指示「すべてのリポジトリの開発状況や
+  追加した機能などをruno.tokyoのプロジェクトシリーズ内で紹介しなおして。
+  完成していればWindows版、LINUX版、Andoroid版などをインストーラー付きで
+  ダウンロード可能にして」)**:
+  1. **前提の確認**: `F:\open-raid-z\CLAUDE.md`「エコシステム全体インストーラー
+     整備計画」節(正本)の在庫調査を`ls <repo>/install.sh <repo>/install.ps1
+     <repo>/.github/workflows/release.yml`で実際に再確認し、
+     `gh release list -R aon-co-jp/<repo>`で公開Releaseの実在も確認した
+     (推測での「完成」表記はしない)。ユーザー要望原文の「出来ていなければ
+     完成させて」は各リポジトリ側の整備(別セッション並行作業の前提)に
+     委ね、このパスは`runo.tokyo`の紹介ページを実態に即して正確に刷新
+     することに専念した。
+  2. **`src/meta_index.rs`に`Distribution`構造体+`Project::distribution`
+     フィールドを新設**: `windows_url`/`linux_url`(実際にGitHub Release
+     資産が存在する場合のみ`Some("https://github.com/<repo>/
+     releases/latest")`)・`android_status`(クロスコンパイル確認止まり/
+     APK生成まで到達/未着手を正直に文言化)・`note`(Releaseがまだ無い
+     理由の説明)を持つ。`distribution: None`のプロジェクト(ライブラリ
+     専用クレート等)は「配布状況」セクション自体を描画しない。
+  3. **実際に確認した配布状況(2026-07-23/24時点)**:
+     - **Windows/Linuxダウンロード可能**(3点セット+公開Release実在済み、
+       `gh release view`でアセット名まで確認): RPoem・RS-Git・RS-Red・
+       RS-Blog・RS-EC・open-web-server。
+     - **インストーラースクリプトは整備済みだがReleaseはまだ無い**:
+       aruaru-db・open-raid-z(v0.1.0タグはpush済みだが`gh run list`で
+       Release自動ビルドがCI失敗中と確認、修正コミット済み・再タグでの
+       検証待ちと正直に記載)・RS-LinkFusion(3点セット整備済みだが
+       タグ未push)・RS-Guard・RS-Ops・RS-Sync(install.sh/ps1のみで
+       release.yml未整備)。
+     - **Android**: `open-web-server`のみKotlin/GradleシェルとAPK生成
+       (`android/app/build/outputs/apk/debug/app-debug.apk`の実在を確認)
+       まで到達、`adb`が`unauthorized`を返し続け実機/エミュレータでの
+       動作確認は未完了と正直に表示(「開発中」であって「配布可能」では
+       ない)。RS-Redは`cargo ndk`でのクロスコンパイル確認のみ(APK化は
+       未着手)。他リポジトリはAndroid未着手。
+  4. **開発状況・紹介文(`role_ja`)の更新**(各リポジトリのCLAUDE.md
+     HANDOFF節を実際に読んで正確な文言にした): `open-web-server`
+     (SFTP組み込みサーバー・UPnP自動ポート開放・無料DDNS〈最大20ドメイン〉・
+     CORS対応・Android APK着手を追記)、`open-easy-web`(DuckDNS連携の
+     「簡単ドメイン設定ウィザード」を追記)、`RS-Red`(ガントチャート用
+     フィールド・status/project_idフィルタAPI・DDNS運用対応・
+     `StorageBackend`抽象化〈ローカル/SFTP/Google Drive〉を追記)、
+     `RPoem`/`RCosmo`(Cosmo共通20クレート中18件の完全一致を`diff -rq`で
+     実調査・`scripts/sync-cosmo-core.sh`新設・Windowsネイティブ環境
+     固有の実バグ〈テストがUnix専用`sleep`をハードコード〉修正を追記)、
+     `aruaru-db`/`open-raid-z`(インストーラー3点セット追加を追記)。
+  5. **`github_cache.rs`との役割分担を明確化**: 配布状況(インストーラー・
+     Release有無)は`GET /repos/<repo>/releases/latest`で自動検出も
+     技術的には可能だが、未認証GitHub APIのレート制限(60req/時)は
+     既存の一括取得(`GET /users/aon-co-jp/repos`、1〜2リクエストで
+     全リポジトリ分)と異なりリポジトリ数だけ個別リクエストが必要になる
+     ため、更新頻度が低い配布状況情報にはオーバースペックと判断し、
+     静的な`Project`フィールドとして管理する工学的判断を採った
+     (`src/meta_index.rs`の`Distribution`構造体コメント・`PORTING.md`に
+     理由を明記)。
+  6. **検証**: `cargo build --tests`成功。`cargo test`**29件全green**
+     (新規1件: `runo_index_page_shows_distribution_status_for_installable_
+     projects_only`——open-web-serverのReleaseダウンロードリンク・
+     Android文言・「配布状況」見出しの実在、RS-JSON〈配布物なし〉の
+     カードに配布状況ボックスが出ないことを確認)。**実HTTP検証**:
+     `cargo run --release`で実サーバーを起動し、`curl http://
+     127.0.0.1:3000/runo`で取得した実HTML本文に
+     `https://github.com/aon-co-jp/open-web-server/releases/latest`・
+     Android対応の正直な文言・「配布状況」の見出し(13箇所)が実在する
+     こと、RS-JSONのカード範囲(`<article>`〜`</article>`)には
+     `dist-box`が出現しないことを`grep`/`sed`で直接確認した(型チェック
+     ・ビルド成功のみで完了と報告していない)。
+  - 次にすべきこと: (1) aruaru-db/open-raid-zのv0.1.0タグ再push→CI検証
+    完了後、`windows_url`/`linux_url`を`Some`へ更新、(2) RS-LinkFusion
+    のタグpush後も同様に更新、(3) RS-Guard/RS-Ops/RS-Syncへの
+    `release.yml`整備(各リポジトリ側の並行セッション作業待ち)完了後、
+    同様にリンクを追加、(4) 配布状況の自動検出(GitHub Release API)が
+    将来的にレート制限面で現実的になった場合は`github_cache.rs`への
+    統合を再検討。
+
 - **2026-07-23 `/runo`ページの掲載漏れ・名称変更を修正 + GitHub API自動更新機能を実装
   (ユーザー指示「全てのリポジトリの紹介はrunoプロジェクトで紹介して、自動更新機能を搭載して」)**:
   1. **名称変更の反映**: `meta_index::PROJECTS`の`RS-Chiketto`エントリを

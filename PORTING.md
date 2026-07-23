@@ -66,6 +66,32 @@ pub struct MuniLink {
   `RwLock`キャッシュを複数テストが同時に上書きし合うレースが起きる
   ため、`test_lock()`(`std::sync::Mutex`)で直列化すること。
 
+## `Project::distribution`(配布状況フィールド、2026-07-24新設)
+
+`meta_index::Project`に`pub distribution: Option<Distribution>`を追加。
+`Distribution { windows_url, linux_url, android_status, note }`はいずれも
+`Option<&'static str>`(`note`のみ`&'static str`)で、静的に配布状況を
+管理する。他のPoemベースリポジトリ(`aruaru-tokyo`等)へ同じ「プロジェクト
+シリーズ索引」パターンをコピーする場合は、この構造体と
+`render_project_card()`内の`dist_box`組み立てロジックも一緒に移植する
+こと。
+
+- `distribution: None` → 配布物を持たないプロジェクト(ライブラリ専用
+  クレート等)として「配布状況」セクション自体を描画しない。
+- `windows_url`/`linux_url`が`Some`の場合のみダウンロードボタンを表示。
+  値は必ず**実際に`gh release list -R <repo>`でReleaseの実在を確認して
+  から**設定すること(推測禁止)。
+- `note`は「インストーラースクリプトはあるがReleaseがまだ無い」等の
+  状況説明に使う(`windows_url`/`linux_url`が両方`None`でも空文字列に
+  せず、正直な理由を書くこと)。
+- **自動検出を見送った理由**: `GET /repos/<repo>/releases/latest`で
+  Release実在を自動検出することも技術的には可能だが、未認証GitHub API
+  のレート制限(60req/時)は`github_cache.rs`の一括取得
+  (`GET /users/<owner>/repos`、1〜2リクエストで全リポジトリ分)と違い、
+  リポジトリ数だけ個別リクエストが必要になる。配布状況は変化頻度が
+  低い情報のため、この制約下では静的フィールド管理の方が妥当と判断した
+  (`src/meta_index.rs`の`Distribution`構造体コメント参照)。
+
 ## `readme-to-rs`のpath依存を安全に外した実例(`Cargo.toml`)
 
 依存パスが実在しないpath依存(`F:\open-runo\open-runo\readme-to-rs`)は
