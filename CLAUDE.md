@@ -66,6 +66,128 @@ DB非依存・1バイナリ完結。
 
 ## HANDOFF(直近の作業ログ、上が最新)
 
+- **2026-07-23 `/runo`ページの掲載漏れ・名称変更を修正 + GitHub API自動更新機能を実装
+  (ユーザー指示「全てのリポジトリの紹介はrunoプロジェクトで紹介して、自動更新機能を搭載して」)**:
+  1. **名称変更の反映**: `meta_index::PROJECTS`の`RS-Chiketto`エントリを
+     `RS-Red`へ改名(2026-07-22にGitHub上のリポジトリ自体が改名済み、
+     `F:\runo\RS-Red\CLAUDE.md`参照)。`src/lib.rs`の`SUB_SERVICES`・
+     `chiketto_page`ハンドラ・テストも合わせて`aon-co-jp/RS-Red`参照へ
+     修正(公開パス`/chiketto`自体は変更せず、対象リポジトリのみ修正
+     ——`/RS-Red`への大規模なURL変更は今回のスコープ外)。`RJSON`エントリも
+     実際のGitHubリポジトリ名`RS-JSON`(`git remote`で確認、`RJSON`/
+     `Rust-JSON`はいずれも旧称・記載の食い違い)へ修正。
+  2. **掲載漏れの修正**: `F:\runo`直下の全Gitリポジトリ(`git remote -v`で
+     実在確認)と`PROJECTS`配列を突き合わせ、掲載漏れだった6件
+     (`RS-Guard`・`RS-LinkFusion`・`RS-SmartTCP`・`RS-Gitbucket`
+     [旧称rs-gitbucket]・`RS-Sync`[旧称rs-sync]・`runo-scanner`)を
+     追加。各リポジトリのREADME.md冒頭を実際に読んで役割説明を記載
+     (推測で書いていない)。`URL`・`runo-forge`ディレクトリは`.git`が
+     存在せず実在するGitリポジトリではないため、意図的に掲載対象から
+     除外(正直な開示としてこのHANDOFFに記録)。
+  3. **GitHub API自動更新機能を新規実装**(`src/github_cache.rs`):
+     `RwLock<HashMap<owner/repo, LiveInfo>>`のプロセス内キャッシュへ、
+     既定1時間おきのバックグラウンドタスク(`main()`から
+     `runo_tokyo::spawn_background_tasks()`を1回呼ぶ、`build_app()`とは
+     分離しテストで多重起動しない設計)がGitHub APIから各リポジトリの
+     説明文・最終更新日時・スター数を取得・反映する。取得失敗時(到達
+     不能・レート制限等)はパニックせず直近のキャッシュ値(起動直後で
+     未取得なら`None`)を保持し、`meta_index::render_project_card`は
+     `None`の場合は静的な`role_ja`のみで描画する(`open-web-server`の
+     `ddns.rs`/`acme.rs`と同じ「補助機能の失敗は権威パスをブロックしない」
+     方針を踏襲)。**`PROJECTS`配列(どのリポジトリを載せるか)は
+     引き続きこのリポジトリ側で静的に管理**し、このモジュールが自動
+     更新するのは各リポジトリの「詳細情報」のみ、というユーザー指示の
+     設計を厳守。
+  4. **正直な開示(実装中に判明した事実)**: 当初`https://api.github.com/
+     orgs/aon-co-jp/repos`(Organizationの一括取得エンドポイント)の
+     利用を想定していたが、実HTTP到達確認の結果`GET /orgs/aon-co-jp`が
+     `404`(=`aon-co-jp`はOrganizationではなく通常のUserアカウント)
+     と判明したため、`GET /users/aon-co-jp/repos`(User版、
+     `per_page=100`でページネーション)へ設計変更した。
+  5. **検証**: `cargo build --tests`成功(警告なし)。`cargo test`
+     **28件全green**(新規6件: `github_cache`モジュール4件
+     [モックHTTPサーバー`wiremock`経由でのキャッシュ反映・HTTPエラー時の
+     キャッシュ保持・到達不能ホストでのパニックなし動作・未知リポジトリで
+     の`None`返却]、`lib.rs`側2件[RS-Chiketto→RS-Red改名の反映確認・
+     掲載漏れ6件の掲載確認・GitHub自動同期表示のモックHTTP経由での実証])。
+     並列実行時、複数テストがプロセス全体で共有する`github_cache`の
+     `RwLock`キャッシュを同時に上書きし合うレースを発見し、
+     `test_lock()`(`std::sync::Mutex`)による直列化で解消(実際に
+     `cargo test`を複数回連続実行しflakyが再発しないことを確認)。
+     **実HTTP検証(型チェックのみで完了と報告しない方針の徹底)**:
+     `curl`でGitHub APIへの実到達を事前確認(`api.github.com/repos/
+     aon-co-jp/RS-Git`→200、`api.github.com/orgs/aon-co-jp`→404で
+     User判定を裏取り)。`cargo run --release`で実サーバーを起動し、
+     `curl http://127.0.0.1:3000/runo`のHTML本文に`aon-co-jp/RS-Red`・
+     6件の新規リポジトリすべて・`aon-co-jp/RS-JSON`が含まれ、
+     `aon-co-jp/RS-Chiketto`・`aon-co-jp/RJSON`が含まれないことを実際に
+     確認。さらに約8秒後にバックグラウンドタスクのログに
+     `github_cache: refreshed 66 repos from GitHub API`が実際に出力され、
+     再取得した`/runo`のHTML本文には29件中25件のプロジェクトカードに
+     「🔄 GitHub自動同期」の行(実際のGitHub上の説明文・最終更新日時・
+     スター数)が実際に反映されていることを確認した(実プロセス起動・
+     実バックグラウンドループ・実GitHub API到達までの一気通貫を実証)。
+  - 次にすべきこと: (1) `URL`・`runo-forge`が今後実際のGitリポジトリ化
+    された場合は`PROJECTS`へ追加、(2) `/chiketto`パスを`RS-Red`の
+    CLAUDE.mdが言及する`/RS-Red`(旧`/chiketto`は301リダイレクト)へ
+    実際に移行するかの検討(今回は対象リポジトリ名の修正のみに留めた)、
+    (3) GitHub自動更新の取得間隔・対象フィールド(トピック・ライセンス等)
+    を必要に応じて拡張。
+
+- **2026-07-22 RS-Opsを「プロジェクトシリーズ索引」+「エコシステム全体を
+  見る」節で紹介(ユーザー指示、当初追加した専用`/RS-Ops`ページ・ルートは
+  ユーザー指示により撤回・削除)**:
+  1. **当初の実装(撤回済み)**: 最初は他のサブサービス(`/chiketto`等)と
+     同じ`subservice_page`パターンで`/RS-Ops`という専用ルートを
+     `SUB_SERVICES`+`build_app()`に追加したが、ユーザーから「プロジェクト
+     シリーズ　と　エコシステム全体を見るの中で紹介して」との明確な
+     指定を受け、この専用ルート・`SubService`エントリ・`rs_ops_page`
+     ハンドラは削除した(RS-Opsは`/chiketto`等と異なり独自のWeb UIを
+     持つ運用対象サービスではなく開発ツールであるため、専用サブページは
+     過剰だったと判断)。
+  2. **`src/meta_index.rs`の`PROJECTS`に`RS-Ops`(`aon-co-jp/RS-Ops`、旧称
+     `RS-AI-DevOps`)エントリを追加**——これが「プロジェクトシリーズ
+     索引」(`/runo`)での紹介に対応する。role_jaにはRS-Git
+     (`GET /api/repos`)・aruaru-llm(`/healthz`・`/v1/chat`)との連携API
+     実装済みであること、Bitbucket/Gitbucket/GitLab/標準Redmineは未検証
+     であること、運用先は`easy-web.tokyo/RS-Ops`(未デプロイ)を予定して
+     いることを正直に記載。`live_url`/`live_status`は共に`None`
+     (runo.tokyo上に実ページが無く、easy-web.tokyoにも未デプロイのため)。
+  3. **TOPページの`render_runo_link_section()`(「エコシステム全体を
+     見る」節)にRS-Ops・RS-Git・aruaru-llmへの直接リンク付き説明文を
+     追加**——これが「エコシステム全体を見る」での紹介に対応する。
+     「RS-Ops(エコシステム全体マップの自動生成、姉妹リポジトリRS-Git・
+     aruaru-llmとの「SET」連携)も、このプロジェクトシリーズ索引に
+     含まれています。」という一文を追記し、3リポジトリのGitHubへ直接
+     リンク。
+  4. **新規テスト`rs_ops_is_introduced_in_ecosystem_section_and_project_series`
+     を追加**(`src/lib.rs`)——TOPページのHTMLに`aon-co-jp/RS-Ops`・
+     `aon-co-jp/RS-Git`・`aon-co-jp/aruaru-llm`へのリンクが含まれる
+     こと、`/runo`ページのレンダリング結果にも`aon-co-jp/RS-Ops`が
+     含まれることを確認する。
+  5. **正直な開示**: このパスでは開発環境の`Shell`ツールが応答不能
+     (コマンド実行結果が返らない、既知の一時的な環境問題)だったため、
+     `cargo build`/`cargo test`による実際のビルド・テスト検証が
+     **できなかった**——ソースコードは既存の`render_runo_link_section`・
+     `PROJECTS`エントリ追加パターンをそのまま踏襲した変更のみで、型的
+     には問題ないと判断しているが、次回セッションでShellツールが復旧
+     した際に必ず`cargo test --workspace`(特に今回追加した
+     `rs_ops_is_introduced_in_ecosystem_section_and_project_series`)を
+     実行し、グリーンであることを確認してからデプロイすること。
+  6. **easy-web.tokyo/RS-Opsでの本体運用は未着手**——ユーザー指示の
+     「完成したらeasy-web.tokyo/RS-Opsで運用して」に対応する部分。
+     これは`runo.tokyo`のコード変更だけでは実現できず、(a) RS-Ops
+     バイナリを実際にVPS上でビルド・systemdサービス化、(b) nginxで
+     `easy-web.tokyo`の443番serverブロックに`location /RS-Ops/`の
+     `proxy_pass`を追加、が必要(既存の`/rs-git`等と同じパターン)。
+     このパスではSSH/VPSアクセスを伴う操作を実行しておらず、次回
+     セッションでの実施が必要。
+  - 次にすべきこと: (1) Shellツール復旧後、`cargo test --workspace`で
+    今回の変更を検証、(2) `easy-web.tokyo`側でのRS-Opsデプロイ
+    (systemdサービス化+nginx `location /RS-Ops/`追加)、(3) デプロイ
+    完了後、`meta_index.rs`の`RS-Ops`エントリの`live_url`/`live_status`を
+    実際の運用先(`https://easy-web.tokyo/RS-Ops`)に更新。
+
 - **2026-07-20(さらに追記) open-runo→open-cosmo改名の反映 + systemd自動復帰の強化**:
   ユーザー指示により`aon-co-jp/open-runo`リポジトリを実際に
   `gh repo rename`で`open-cosmo`へ改名(GitHub側は自動リダイレクトが

@@ -34,8 +34,17 @@ use poem::web::{Html, Query};
 use poem::{get, handler, IntoResponse, Route};
 use serde::{Deserialize, Serialize};
 
+mod github_cache;
 mod i18n;
 mod meta_index;
+
+/// アプリ起動時に呼ぶバックグラウンドタスク一式(GitHub APIからの
+/// プロジェクト詳細情報の定期取得等)。`build_app()`から独立させている
+/// のは、テストで`build_app()`を呼ぶたびにバックグラウンドタスクが
+/// 何本も起動してしまうのを避けるため(`main.rs`からのみ呼び出す)。
+pub fn spawn_background_tasks() {
+    github_cache::spawn_background_refresh();
+}
 
 pub(crate) const STYLE: &str = r#"
   :root { color-scheme: light dark; --bg:#fdf6ec; --bg-card:#ffffff; --fg:#2c2418; --muted:#8a7f6b; --accent:#ff7a45; --accent-2:#2f6fed; --border:#eadfc9; }
@@ -430,10 +439,10 @@ pub const SUB_SERVICES: &[SubService] = &[
     },
     SubService {
         path: "/chiketto",
-        title: "RS-Chiketto",
-        description: "Redmine相当のチケット管理システム",
-        status: "公開中(open-web-serverのpath_prefixルーティング経由でRS-Chikettoへ、2026-07-22)",
-        github_repo: Some("aon-co-jp/RS-Chiketto"),
+        title: "RS-Red",
+        description: "Redmine相当のチケット管理システム(旧称RS-Chiketto、2026-07-22にRS-Redへ改名)",
+        status: "公開中(open-web-serverのpath_prefixルーティング経由でRS-Redへ、2026-07-22)",
+        github_repo: Some("aon-co-jp/RS-Red"),
     },
     SubService {
         path: "/blog",
@@ -471,6 +480,7 @@ fn render_subservices_section() -> String {
 fn render_runo_link_section() -> String {
     r#"<section class="block" id="runo-index"><h2>エコシステム全体を見る</h2>
 <p><a href="https://github.com/aon-co-jp/RUNO" target="_blank" rel="noopener">RUNO</a>リポジトリで、RUNOプロジェクト(open-cosmo / open-aruaru エコシステム全体のプロジェクト一覧、README・PORTING.md・CLAUDE.mdへのリンク付き)を御紹介しております。「プロジェクトシリーズ索引」ページでもまとめて確認できます(13言語(日本語・英語・中国語・韓国語ほか)対応、ログイン不要でGitHubと同じようにファイル一覧を閲覧できます)。</p>
+<p><a href="https://github.com/aon-co-jp/RS-Ops" target="_blank" rel="noopener">RS-Ops</a>(エコシステム全体マップの自動生成、姉妹リポジトリ<a href="https://github.com/aon-co-jp/RS-Git" target="_blank" rel="noopener">RS-Git</a>・<a href="https://github.com/aon-co-jp/aruaru-llm" target="_blank" rel="noopener">aruaru-llm</a>との「SET」連携)も、このプロジェクトシリーズ索引に含まれています。</p>
 <div class="org-link"><a href="/runo">📚 プロジェクトシリーズ索引を見る (/runo)</a></div>
 </section>"#
         .to_string()
@@ -567,7 +577,10 @@ async fn subservice_page(repo: &'static str, q: LangQuery) -> Html<String> {
 
 #[handler]
 async fn chiketto_page(Query(q): Query<LangQuery>) -> Html<String> {
-    subservice_page("aon-co-jp/RS-Chiketto", q).await
+    // 2026-07-22にGitHub上のリポジトリ名がRS-ChikettoからRS-Redへ改名された
+    // (`F:\runo\RS-Red\CLAUDE.md`参照)。runo.tokyo側の公開パス自体は
+    // 引き続き`/chiketto`のまま(URLの大規模な変更は本タスクのスコープ外)。
+    subservice_page("aon-co-jp/RS-Red", q).await
 }
 
 #[handler]
@@ -585,6 +598,13 @@ async fn ec_page(Query(q): Query<LangQuery>) -> Html<String> {
 /// `/rs-git`・`/open-web-server`は本アプリではなく、それぞれ実際に稼働する
 /// RS-Git・open-web-serverへnginxがproxy_passするため、ここではルートを
 /// 定義しない(定義しても本番はnginxが先に振り分ける)。
+///
+/// **RS-Opsについて(2026-07-22、ユーザー指示)**: RS-Opsは`/RS-Ops`という
+/// 専用のサブサービスページ・ルートは持たない——「プロジェクトシリーズ
+/// 索引」(`/runo`、`meta_index::PROJECTS`)と、TOPページの「エコシステム
+/// 全体を見る」節(`render_runo_link_section`)の2箇所でのみ紹介する方針
+/// (ユーザー指示: 「プロジェクトシリーズ　と　エコシステム全体を見るの
+/// 中で紹介して」)。
 pub fn build_app() -> Route {
     Route::new()
         .at("/", get(index_handler))
@@ -681,6 +701,23 @@ mod tests {
         }
     }
 
+    /// RS-Ops(RS-Git・aruaru-llmとのSET)が「エコシステム全体を見る」節に
+    /// 紹介されており、`/runo`(プロジェクトシリーズ索引)にも掲載されて
+    /// いることを確認する(ユーザー指示、2026-07-22: 「プロジェクト
+    /// シリーズとエコシステム全体を見るの中で紹介して」)。RS-Ops専用の
+    /// トップレベルルート(`/RS-Ops`等)は意図的に持たない。
+    #[test]
+    fn rs_ops_is_introduced_in_ecosystem_section_and_project_series() {
+        let html = top_page_html();
+        assert!(html.contains("aon-co-jp/RS-Ops"), "エコシステム全体を見る節にRS-Opsへのリンクが見つかりません");
+        assert!(html.contains("aon-co-jp/RS-Git"));
+        assert!(html.contains("aon-co-jp/aruaru-llm"));
+
+        let runo_html = meta_index::render_page(i18n::Lang::Ja, "/runo");
+        assert!(runo_html.contains("aon-co-jp/RS-Ops"), "プロジェクトシリーズ索引にRS-Opsが見つかりません");
+        assert!(runo_html.contains("RS-Ops"));
+    }
+
     /// TOPページにサブサービス一覧(タイトル・パス・進捗状況)が掲載され、
     /// 未完成のものは「開発途中」等と明記されていることを確認する
     /// (ユーザー指示、2026-07-21)。
@@ -698,7 +735,7 @@ mod tests {
     /// リンクがGitHubのように読めることを確認する。
     #[test]
     fn subservice_pages_expose_readme_porting_claude_links() {
-        for repo in ["aon-co-jp/RS-Chiketto", "aon-co-jp/RS-Blog", "aon-co-jp/RS-EC"] {
+        for repo in ["aon-co-jp/RS-Red", "aon-co-jp/RS-Blog", "aon-co-jp/RS-EC"] {
             let html = meta_index::render_single_project_page(repo, i18n::Lang::Ja).expect("project should exist");
             assert!(html.contains(&format!("{repo}/blob/main/README.md")), "{repo}: READMEリンクが見つかりません");
             assert!(html.contains(&format!("{repo}/blob/main/PORTING.md")), "{repo}: PORTING.mdリンクが見つかりません");
@@ -765,6 +802,66 @@ mod tests {
         assert!(html.contains("aon-co-jp/RUNO"));
     }
 
+    /// 2026-07-22のGitHubリポジトリ改名(RS-Chiketto → RS-Red)が
+    /// `/runo`ページ・PROJECTS配列に反映されており、旧名のリポジトリ参照が
+    /// 残っていないことを確認する。
+    #[test]
+    fn runo_index_page_reflects_rs_chiketto_rename_to_rs_red() {
+        let html = meta_index::render_page(i18n::Lang::Ja, "/runo");
+        assert!(html.contains("aon-co-jp/RS-Red"), "RS-Redへの参照が見つかりません");
+        assert!(!html.contains("aon-co-jp/RS-Chiketto"), "改名済みのはずのRS-Chikettoへの参照が残っています");
+        assert!(meta_index::find_project("aon-co-jp/RS-Red").is_some());
+        assert!(meta_index::find_project("aon-co-jp/RS-Chiketto").is_none());
+    }
+
+    /// `github_cache`(バックグラウンド定期取得のキャッシュ)にGitHub情報が
+    /// 反映されている場合、`/runo`ページの該当プロジェクトカードに
+    /// 「GitHub自動同期」の表示が実際に現れることを確認する
+    /// (モックHTTPサーバー経由の実HTTP検証、`wiremock`使用)。
+    #[tokio::test]
+    async fn runo_index_page_shows_auto_synced_github_info_when_cached() {
+        let _guard = github_cache::test_lock().lock().unwrap_or_else(|e| e.into_inner());
+        let server = wiremock::MockServer::start().await;
+        let body = serde_json::json!([{
+            "full_name": "aon-co-jp/runo-scanner",
+            "description": "テスト用の自動同期説明文",
+            "pushed_at": "2026-07-23T12:00:00Z",
+            "stargazers_count": 7
+        }]);
+        wiremock::Mock::given(wiremock::matchers::method("GET"))
+            .and(wiremock::matchers::path("/users/aon-co-jp/repos"))
+            .respond_with(wiremock::ResponseTemplate::new(200).set_body_json(&body))
+            .mount(&server)
+            .await;
+        let client = reqwest::Client::new();
+        github_cache::refresh_once(&client, &server.uri()).await.expect("refresh should succeed");
+
+        let html = meta_index::render_page(i18n::Lang::Ja, "/runo");
+        assert!(html.contains("GitHub自動同期"), "自動同期の表示が見つかりません");
+        assert!(html.contains("テスト用の自動同期説明文"));
+        assert!(html.contains("⭐ 7"));
+    }
+
+    /// 2026-07-23時点で`F:\runo`配下に実在すると確認できた、それまで
+    /// `/runo`ページに掲載漏れだったリポジトリ(RS-Guard・RS-LinkFusion・
+    /// RS-SmartTCP・RS-Gitbucket・RS-Sync・runo-scanner)が、それぞれ
+    /// 掲載されていることを確認する。
+    #[test]
+    fn runo_index_page_lists_previously_missing_repos() {
+        let html = meta_index::render_page(i18n::Lang::Ja, "/runo");
+        for repo in [
+            "aon-co-jp/RS-Guard",
+            "aon-co-jp/RS-LinkFusion",
+            "aon-co-jp/RS-SmartTCP",
+            "aon-co-jp/RS-Gitbucket",
+            "aon-co-jp/RS-Sync",
+            "aon-co-jp/runo-scanner",
+        ] {
+            assert!(html.contains(repo), "{repo}が/runoページに見つかりません");
+            assert!(meta_index::find_project(repo).is_some(), "{repo}がPROJECTS配列に見つかりません");
+        }
+    }
+
     #[test]
     fn runo_index_page_supports_lang_switch() {
         let html_en = meta_index::render_page(i18n::Lang::En, "/runo");
@@ -814,7 +911,7 @@ mod tests {
 
     #[test]
     fn subservice_page_syncs_role_text_with_github_readme() {
-        let html = meta_index::render_single_project_page("aon-co-jp/RS-Chiketto", i18n::Lang::Ja).expect("project should exist");
+        let html = meta_index::render_single_project_page("aon-co-jp/RS-Red", i18n::Lang::Ja).expect("project should exist");
         assert!(html.contains("data-repo-role="));
         assert!(html.contains("fetchReadmeSummary"));
     }

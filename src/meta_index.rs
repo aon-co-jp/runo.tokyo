@@ -21,6 +21,7 @@
 //! 13言語へは翻訳していない(スコープの限界、`crate::i18n`冒頭コメント
 //! 参照)。
 
+use crate::github_cache;
 use crate::html_escape;
 use crate::i18n::{index_strings, Lang};
 
@@ -90,12 +91,12 @@ pub const PROJECTS: &[Project] = &[
         live_status: Some("稼働中"),
     },
     Project {
-        name: "RJSON",
-        repo: "aon-co-jp/RJSON",
+        name: "RS-JSON",
+        repo: "aon-co-jp/RS-JSON",
         has_readme: true,
         has_porting: true,
         has_claude: true,
-        role_ja: "寛容(lenient)モードと厳密(strict)モードの両方を1つのクレートから提供するJSON処理ライブラリ。パース結果は常に標準の`serde_json::Value`。RS-GitのWASMフロントエンド向けに、`serde_json`非依存の軽量`light`モジュール(ブラウザの`JSON.parse`相当)も同梱。(開発開始日: 2026-07-18)",
+        role_ja: "寛容(lenient)モードと厳密(strict)モードの両方を1つのクレートから提供するJSON処理ライブラリ。パース結果は常に標準の`serde_json::Value`。RS-GitのWASMフロントエンド向けに、`serde_json`非依存の軽量`light`モジュール(ブラウザの`JSON.parse`相当)も同梱。旧称RJSON/Rust-JSON(GitHub上の実リポジトリ名はRS-JSON)。(開発開始日: 2026-07-18)",
         live_url: None,
         live_status: None,
     },
@@ -230,12 +231,12 @@ pub const PROJECTS: &[Project] = &[
         live_status: Some("稼働中"),
     },
     Project {
-        name: "RS-Chiketto",
-        repo: "aon-co-jp/RS-Chiketto",
+        name: "RS-Red",
+        repo: "aon-co-jp/RS-Red",
         has_readme: true,
         has_porting: true,
         has_claude: true,
-        role_ja: "REDMINEのRust＋RPoem版を中心に開発を開始。ハイスピードでハイセキュリティで省メモリなどの新規の特徴を持ちます。運用時は、VPSレンタルサーバー費用を安く抑えられる予定で御座います。(開発開始日: 2026-07-21、公開日: 2026-07-22、open-web-serverのpath_prefixルーティング経由)",
+        role_ja: "旧称RS-Chiketto(2026-07-22にRS-Redへ改名)。REDMINEのRust＋RPoem版。チケット(Issue)管理・プロジェクト/サブプロジェクト階層・Wiki・コメント・ガントチャート用フィールド・OTPログイン・アクセス制御を実装、ブラウザGUI(Rust→WebAssembly)も新設済み。ハイスピード・ハイセキュリティ・省メモリが特徴。v0.1.0時点でRedmine全体の機能網羅率はまだ2〜3割程度(README/CLAUDE.mdに正直に明記)。(開発開始日: 2026-07-21、公開日: 2026-07-22、open-web-serverのpath_prefixルーティング経由)",
         live_url: Some("https://runo.tokyo/chiketto"),
         live_status: Some("公開中"),
     },
@@ -258,6 +259,76 @@ pub const PROJECTS: &[Project] = &[
         role_ja: "EC-CUBEのRust＋RPoem版です。実際の決済連携(Stripe等)を目指します。(開発開始日: 2026-07-21、公開日: 2026-07-22、open-web-serverのpath_prefixルーティング経由。決済連携・SMTP未設定のためOTPログイン等は引き続き未検証)",
         live_url: Some("https://runo.tokyo/ec"),
         live_status: Some("公開中"),
+    },
+    Project {
+        name: "RS-Ops",
+        repo: "aon-co-jp/RS-Ops",
+        has_readme: true,
+        has_porting: true,
+        has_claude: true,
+        role_ja: "旧称RS-AI-DevOps(2026-07-22改名)。「エコシステム全体マップの自動生成」の製品化。GitHub/RS-Chiketto/GitLab/Bitbucket/Redmineとの連携、Claude/Cursor/ChatGPT等向けコンテキストファイル(CLAUDE.md/.cursorrules/AGENTS.md)自動生成に加え、姉妹リポジトリRS-Git(`GET /api/repos`)・aruaru-llm(`/healthz`・`/v1/chat`)との連携APIを実装(RS-Ops・RS-Git・aruaru-llmの「SET」)。GitHub/RS-Chikettoのみ実機検証済み、Bitbucket/Gitbucket/GitLab/標準Redmineはインターフェースのみで正直に開示。運用先はeasy-web.tokyo/RS-Ops(未デプロイ、準備中)を予定。(開発開始日: 2026-07-22)",
+        live_url: None,
+        live_status: None,
+    },
+    Project {
+        name: "RS-Guard",
+        repo: "aon-co-jp/RS-Guard",
+        has_readme: true,
+        has_porting: false,
+        has_claude: true,
+        role_ja: "このエコシステム(aon-co-jp)のリポジトリ・依存パッケージに悪意あるコードが混入していないかを静的にチェックするサプライチェーンスキャナ。既存のClamAV等アンチウイルスを置き換えるものではなく併用する「ClamAV＋α」という位置づけ(独自のウイルス定義DBは持たない)。依存パッケージ名のブロックリスト照合・スパイウェア的挙動のコード片検出・破壊的操作/無断自動実行の検出・aruaru-llmによるAI二次判定・ClamAV連携(導入済み環境のみ)を実装、Windows/Linux版はruno.tokyo/RS-Guardで公開中。(開発開始日: 2026-07-22)",
+        live_url: Some("https://runo.tokyo/RS-Guard"),
+        live_status: Some("公開中(紹介・ダウンロードページ、easy-web.tokyo側のログイン後実運用画面は未着手)"),
+    },
+    Project {
+        name: "RS-LinkFusion",
+        repo: "aon-co-jp/RS-LinkFusion",
+        has_readme: true,
+        has_porting: true,
+        has_claude: true,
+        role_ja: "複数のWAN/LAN/WiFi(古い規格〜WiFi 7まで)を1つの論理接続へ束ね(ボンディング)、通信の高速化・安定化を実現するアプリ。ポート単位の軽量トンネル(serve/connect)と、TUN仮想アダプタ方式のフルVPNゲートウェイ(gateway-serve/gateway-connect)の2方式を提供。ループバック環境での実データ転送・GPU(DirectX 12)アクセラレーションは実機検証済み、複数物理NICでの真のマルチホーミング効果はこの開発環境では未検証と正直に開示(README/CLAUDE.md参照)。インストーラー付きWindows/Linux版として配布予定。(開発開始日: 2026-07-23)",
+        live_url: None,
+        live_status: None,
+    },
+    Project {
+        name: "RS-SmartTCP",
+        repo: "aon-co-jp/RS-SmartTCP",
+        has_readme: true,
+        has_porting: false,
+        has_claude: true,
+        role_ja: "IOWN/APN(NTTのオールフォトニクス・ネットワーク)のような超低遅延・ジッター無し回線と、Smart-TCP(AI生成通信プロトコル)の良いとこ取りハイブリッド適応制御ライブラリ。実測RTT・ジッターに基づき、TCP(RFC 6298)/QUIC(RFC 9002)と同じSRTT/RTTVAR(Jacobson/Karels EWMA)アルゴリズムでネットワーク品質を分類し、リトライ間隔をFast/Slowの2段階で切り替える。訓練済みMLモデルは使わない決定論的ヒューリスティックであり、実在の同名論文(arXiv 2512.00491)の実装そのものではないと正直に開示。RS-LinkFusion等から利用される。(開発開始日: 2026-07-23)",
+        live_url: None,
+        live_status: None,
+    },
+    Project {
+        name: "RS-Sync",
+        repo: "aon-co-jp/RS-Sync",
+        has_readme: true,
+        has_porting: false,
+        has_claude: true,
+        role_ja: "GitHub / RS-Git / Gitea / Gitbucket間で、アカウント登録・同期ジョブ設定(一方向/双方向)・スケジュール設定・手動実行ができるリポジトリ同期・バックアップWEBアプリ。VPS上の既存cronスクリプトを土台に汎用化。GitHubプロバイダのみ実機(実HTTP・実git push)で検証済み、RS-Git/Gitea/Gitbucketはドキュメントベースの実装のみで実機未検証と正直に開示。(開発開始日: 2026-07-22)",
+        live_url: Some("https://runo.tokyo/rs-sync"),
+        live_status: Some("稼働中(MVP、GitHubプロバイダのみ実機検証済み)"),
+    },
+    Project {
+        name: "RS-Gitbucket",
+        repo: "aon-co-jp/RS-Gitbucket",
+        has_readme: true,
+        has_porting: false,
+        has_claude: true,
+        role_ja: "GitBucket(Scala製セルフホスト型Gitプラットフォーム)相当の機能をRustで実装する構想のリポジトリ。既存のRS-Git(Git forge、OTPログイン・アクセス制御パターン先行実装済み)との役割分担を整理してから着手する方針で、2026-07-23時点ではコード未着手のプレースホルダー(README/CLAUDE.mdのみ)。",
+        live_url: None,
+        live_status: None,
+    },
+    Project {
+        name: "runo-scanner",
+        repo: "aon-co-jp/runo-scanner",
+        has_readme: true,
+        has_porting: false,
+        has_claude: true,
+        role_ja: "F:\\runo配下の複数プロジェクトを自動認識するRust製スキャナー。open-raid-z配下のruno-scan.txt(TOML形式のスキャンルール: 探索深度・除外ディレクトリ・プロジェクト判定マーカー・リポジトリ名/ドメイン名判定パターン・キャッシュ設定)を読み込み、F:\\runoを再帰的にスキャンしてプロジェクト一覧(パス・種別・マーカー)を出力する。スキャンルール自体の正本はopen-raid-z側が管理し、このリポジトリは実装のみを持つ。",
+        live_url: None,
+        live_status: None,
     },
     Project {
         name: "RUNO (旧称: open-aruaru-runo-iLumi → aon)",
@@ -300,6 +371,27 @@ fn render_project_card(p: &Project, s: &crate::i18n::IndexStrings) -> String {
         ),
         _ => String::new(),
     };
+    // サーバー側で定期取得(既定1時間おき)したGitHub情報のキャッシュ
+    // (`src/github_cache.rs`)。取得できていれば、説明文・最終更新日時・
+    // スター数を「自動更新」の一言付きで表示する。未取得(起動直後・
+    // GitHub API到達不能・レート制限等)の場合はこの行自体を出さず、
+    // 静的な`role_ja`のみで表示する(補助機能の失敗が権威パスである
+    // ページ描画をブロックしない設計)。
+    let auto_sync = match github_cache::get(p.repo) {
+        Some(info) => {
+            let desc = info.description.as_deref().filter(|s| !s.is_empty());
+            let stars = info.stargazers_count.map(|n| n.to_string()).unwrap_or_else(|| "?".to_string());
+            let updated = info.pushed_at.as_deref().unwrap_or("?");
+            format!(
+                r#"<p class="auto-sync" data-repo-autosync="{repo}">🔄 <span class="pending">GitHub自動同期(サーバー側、1時間おき)</span>: {desc}最終更新 {updated} / ⭐ {stars}</p>"#,
+                repo = html_escape(p.repo),
+                desc = desc.map(|d| format!("{} / ", html_escape(d))).unwrap_or_default(),
+                updated = html_escape(updated),
+                stars = html_escape(&stars),
+            )
+        }
+        None => String::new(),
+    };
     // 「プロジェクトのご利用」ボックス: ファイル説明(README/PORTING/CLAUDE)とは
     // 独立させ、利用に特化したリンクのみを日英併記で置く(ユーザー指示、
     // 2026-07-22)。
@@ -326,6 +418,7 @@ fn render_project_card(p: &Project, s: &crate::i18n::IndexStrings) -> String {
         r#"<article class="repo-card" data-repo="{repo}">
   <h3><a href="{repo_url}" target="_blank" rel="noopener">📦 {name}</a></h3>
   <p class="role" data-repo-role="{repo}" data-fallback-role="{role}">{role}</p>
+  {auto_sync}
   {live}
   {usage_box}
   <ul class="file-list">
@@ -341,6 +434,7 @@ fn render_project_card(p: &Project, s: &crate::i18n::IndexStrings) -> String {
         repo_url = repo_url,
         name = html_escape(p.name),
         role = html_escape(p.role_ja),
+        auto_sync = auto_sync,
         live = live,
         usage_box = usage_box,
         files = files,
@@ -371,6 +465,7 @@ pub const META_INDEX_STYLE: &str = r#"
   .repo-card p.role { color:var(--muted); font-size:.85rem; margin:0 0 .75rem; line-height:1.6; }
   .repo-card p.live-link { font-size:.85rem; margin:0 0 .75rem; }
   .repo-card p.live-link a { color:var(--accent-2); font-weight:600; }
+  .repo-card p.auto-sync { font-size:.8rem; color:var(--muted); margin:0 0 .6rem; }
   .usage-box { background:rgba(47,111,237,.07); border:1px solid var(--border); border-radius:.6rem; padding:.75rem .9rem; margin:0 0 .9rem; font-size:.85rem; }
   .usage-box strong { font-size:.88rem; }
   .usage-box p { margin:.35rem 0 .6rem; color:var(--muted); line-height:1.5; }

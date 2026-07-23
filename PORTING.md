@@ -43,6 +43,29 @@ pub struct MuniLink {
 }
 ```
 
+## `src/github_cache.rs`(GitHub API定期取得キャッシュ、2026-07-23新設)
+
+`/runo`ページのプロジェクトカードに、GitHub API由来の説明文・最終更新
+日時・スター数を「サーバー側で定期取得したもの」として表示するための
+バックグラウンド更新機構。他のPoemベースリポジトリ(`aruaru-tokyo`等)へ
+そのまま持っていける独立モジュール(依存は`reqwest`/`tracing`/
+`serde`/`tokio`のみ、テストに`wiremock`が必要)。
+
+- `spawn_background_refresh()`を`main()`から一度だけ呼ぶ(`build_app()`
+  ではなくテストで何本も起動されないよう分離すること、`lib.rs`の
+  `spawn_background_tasks()`参照)。
+- `get(repo: &str) -> Option<LiveInfo>`で読み出し、`None`の場合は
+  呼び出し側で静的な既定値へフォールバックすること(`meta_index.rs`の
+  `render_project_card`が実例)。
+- **`https://api.github.com/orgs/<owner>/repos`ではなく
+  `https://api.github.com/users/<owner>/repos`を使うこと**——移植先の
+  GitHubアカウントがOrganizationかUserかを`GET /orgs/<owner>`で
+  事前確認すること(このリポジトリでの実例: `aon-co-jp`は実はUser
+  アカウントだった)。
+- テストで`refresh_once()`を並列に呼ぶ場合、プロセス全体で共有する
+  `RwLock`キャッシュを複数テストが同時に上書きし合うレースが起きる
+  ため、`test_lock()`(`std::sync::Mutex`)で直列化すること。
+
 ## `readme-to-rs`のpath依存を安全に外した実例(`Cargo.toml`)
 
 依存パスが実在しないpath依存(`F:\open-runo\open-runo\readme-to-rs`)は

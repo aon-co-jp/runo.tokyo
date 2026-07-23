@@ -12,6 +12,16 @@ poem = "3"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+# GitHub REST APIから各リポジトリの最新情報(説明文・最終更新日時・スター数)を
+# 定期取得するために使用(`src/github_cache.rs`)。Android等クロスコンパイル時の
+# openssl-sys問題を避けるため、既存エコシステム方針(open-web-server等)に合わせ
+# default-featuresを切り、rustls-tlsを明示指定する。
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+tracing = "0.1"
+tracing-subscriber = "0.3"
+
+[dev-dependencies]
+wiremock = "0.6"
 
 [lib]
 name = "runo_tokyo"
