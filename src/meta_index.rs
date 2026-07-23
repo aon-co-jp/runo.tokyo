@@ -123,6 +123,17 @@ pub const PROJECTS: &[Project] = &[
         }),
     },
     Project {
+        name: "open-cosmo",
+        repo: "aon-co-jp/open-cosmo",
+        has_readme: true,
+        has_porting: true,
+        has_claude: true,
+        role_ja: "旧称open-runo(2026-07-20にGitHub上でopen-cosmoへ改名)。WunderGraph Cosmoの有料版を含む全ての機能の完全無料のオープンソース版。WEBサーバー負荷やDBバックアップ分散統合機能など。姉妹リポジトリRPoem(旧poem-cosmo-tauri)と同時並行で開発されていた独立したプロジェクトで、RCosmoとは別のリポジトリ(RCosmoも過去に「open-runo」と呼ばれていた時期があり紛らわしいが、GitHub上のopen-cosmoリポジトリ自体はRCosmoとは異なる実体)。",
+        live_url: None,
+        live_status: None,
+        distribution: None,
+    },
+    Project {
         name: "RFrontEnd",
         repo: "aon-co-jp/RFrontEnd",
         has_readme: true,

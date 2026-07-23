@@ -387,5 +387,5 @@ DB非依存・1バイナリ完結。
   ページ(`i18n.rs`/`meta_index.rs`)の移植元
 - [RUNO](https://github.com/aon-co-jp/RUNO)(旧称:
   open-aruaru-runo-iLumi → aon) — エコシステム全体のメタ索引リポジトリ
-- [open-runo](https://github.com/aon-co-jp/open-runo) — Rust→WASM/tokio+hyperのopen-runoエコシステム本体
+- [open-cosmo](https://github.com/aon-co-jp/open-cosmo)(旧称open-runo、2026-07-20にGitHub上で改名) — Rust→WASM/tokio+hyperのopen-cosmoエコシステム本体
 - [open-raid-z](https://github.com/aon-co-jp/open-raid-z) — 開発ルールの正本

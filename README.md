@@ -9,7 +9,7 @@
   - 東京都西部各自治体の役所・観光案内サイトへのリンク集(実在確認済みURLのみ掲載。未提供のものは推測せず「準備中」と明記)
   - 企業・工場・倉庫事業用地のドローン空撮紹介(実際の動画は未収録のため準備中プレースホルダー)
   - 親子でのテレワーク・パソコン学習の文脈でのGoogle画像検索(`https://www.google.com/imghp`)へのリンク
-  - open-aruaru/open-runo系列アプリの一覧とGitHubリンク
+  - open-aruaru/open-cosmo系列アプリの一覧とGitHubリンク
   - `/runo`(プロジェクトシリーズ索引)へのリンク
 - `/runo` — エコシステム全体のメタ索引リポジトリ`RUNO`(旧称: open-aruaru-runo-iLumi → aon → RUNO)と同内容の「プロジェクトシリーズ索引」ページ。13言語対応(`?lang=`)。`aruaru-tokyo`の`src/meta_index.rs`/`src/i18n.rs`を移植。
   - **どのリポジトリを載せるか**(`meta_index::PROJECTS`)は引き続きこのリポジトリ側で静的に管理する。**各リポジトリの詳細情報(説明文・最終更新日時・スター数)はGitHub APIから自動更新**する(`src/github_cache.rs`、既定1時間おきのバックグラウンド取得、詳細は下記「GitHub自動更新機能」節参照)。

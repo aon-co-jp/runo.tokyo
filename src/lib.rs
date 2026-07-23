@@ -1,7 +1,7 @@
 //! runo.tokyo Webサイト。
 //!
 //! 【現状のスコープ】
-//! - open-aruaru/open-runo系列アプリの紹介ページ(アプリ名・説明・GitHubリンク)
+//! - open-aruaru/open-cosmo系列アプリの紹介ページ(アプリ名・説明・GitHubリンク)
 //! - 東京都西部各自治体(あきる野市・旧五日市・桧原村・青梅・奥多摩・羽村・
 //!   福生・昭島・立川・国立・八王子・高尾・日の出町など)の役所・観光案内
 //!   ホームページへのリンク集
@@ -96,7 +96,7 @@ pub struct AppEntry {
     pub github_url: &'static str,
 }
 
-/// open-aruaru/open-runo系列アプリの一覧(アプリ紹介機能のデータ源)。
+/// open-aruaru/open-cosmo系列アプリの一覧(アプリ紹介機能のデータ源)。
 pub fn family_apps() -> Vec<AppEntry> {
     vec![
         AppEntry {
