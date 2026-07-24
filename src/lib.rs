@@ -433,8 +433,8 @@ pub const SUB_SERVICES: &[SubService] = &[
     SubService {
         path: "/open-web-server",
         title: "open-web-server",
-        description: "Apache+Nginx相当のRust製Webサーバー紹介ページ",
-        status: "開発途中(紹介ページのみ公開、本体サーバー化は準備中)",
+        description: "Apache+Nginx相当のRust製Webサーバー。runo.tokyo/open-web-serverで紹介",
+        status: "本番稼働中(runo.tokyo自身を含む複数ドメインで、2026-07-24にnginxから完全移行)",
         github_repo: None,
     },
     SubService {
@@ -483,6 +483,20 @@ fn render_runo_link_section() -> String {
 <p><a href="https://github.com/aon-co-jp/RS-Ops" target="_blank" rel="noopener">RS-Ops</a>(エコシステム全体マップの自動生成、姉妹リポジトリ<a href="https://github.com/aon-co-jp/RS-Git" target="_blank" rel="noopener">RS-Git</a>・<a href="https://github.com/aon-co-jp/aruaru-llm" target="_blank" rel="noopener">aruaru-llm</a>との「SET」連携)も、このプロジェクトシリーズ索引に含まれています。</p>
 <div class="org-link"><a href="/runo">📚 プロジェクトシリーズ索引を見る (/runo)</a></div>
 </section>"#
+        .to_string()
+}
+
+/// ページ最上部に置く、姉妹サイトkaru.tokyoへのリンク集(2026-07-24追加)。
+fn render_karu_tokyo_links() -> String {
+    r##"<section class="block" id="karu-tokyo-links">
+<h2>🏔️ karu.tokyo リンク集 / karu.tokyo Links</h2>
+<ul class="linklist">
+<li><a href="https://karu.tokyo/" target="_blank" rel="noopener noreferrer">TOP</a></li>
+<li><a href="https://karu.tokyo/tourism" target="_blank" rel="noopener noreferrer">観光とリモートワーク / Tourism &amp; Remote Work</a></li>
+<li><a href="https://karu.tokyo/lifestyle" target="_blank" rel="noopener noreferrer">郊外暮らし・住まい・AUDIO・映画 / Suburban Lifestyle, Audio &amp; Film</a></li>
+<li><a href="https://karu.tokyo/industry" target="_blank" rel="noopener noreferrer">IT・AI・AUDIO・貿易産業 / IT, AI, Audio &amp; Trade Industries</a></li>
+</ul>
+</section>"##
         .to_string()
 }
 
@@ -544,9 +558,15 @@ pub fn top_page_html() -> String {
 <header>
   <h1><span>runo</span>.tokyo</h1>
   <p>東京都西部の暮らし・テレワークと、open-cosmoエコシステムの入口</p>
+  <p class="lang">runo.tokyoは、東京都あきる野市を走って巡回する「るのバス」にヒントを得て
+  runo(るの).tokyoと名付けました。東京都あきる野市を含む東京都と軽井沢と世界を
+  オンラインでつなぎ、郊外でAUDIOでも心地良く聴きながらリモートワークや
+  テレワークする生活はいかがですか？</p>
 </header>
 
 {easy_free_domain_top}
+
+{karu_tokyo_links}
 
 <div class="quick-links">
   <a href="#municipalities">自治体リンク集</a>
@@ -579,6 +599,7 @@ pub fn top_page_html() -> String {
         blog_title_ja = html_escape(BLOG_POST_TITLE_JA),
         blog_title_en = html_escape(BLOG_POST_TITLE_EN),
         easy_free_domain_top = render_easy_free_domain_top_banner(),
+        karu_tokyo_links = render_karu_tokyo_links(),
         catchcopy = render_catchcopy_section(),
         intro = render_intro_section(),
         municipalities = render_municipality_section(),
