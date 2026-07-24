@@ -66,6 +66,46 @@ DB非依存・1バイナリ完結。
 
 ## HANDOFF(直近の作業ログ、上が最新)
 
+- **2026-07-24(さらに追記) 5リポジトリ分のAndroidクライアント新規実装+aruaru-db/open-raid-zのRelease確定を`/runo`配布状況へ反映
+  (ユーザー指示「runo.tokyoの配布状況のプロジェクトページは、Githubの中身だけの書き換えではなく。
+  runo.tokyoのプロジェクトのページとして5リポジトリ分まとめて更新して」)**:
+  1. **`src/meta_index.rs`の`PROJECTS`配列を直接編集**(GitHub側の各リポジトリCLAUDE.mdの記録を
+     参照しつつ、`runo.tokyo`自身の紹介ページのコードとして反映——ユーザーが区別を求めた
+     「GitHubの中身の書き換え」と「runo.tokyoのプロジェクトページとしての更新」の後者に対応):
+     - RPoem: `android_status`に、リモート接続クライアント(`tokyo.runo.rpoem`、
+       サーバーはVPS/デスクトップ側で稼働するためAndroid上でバイナリ起動はせず
+       接続先URL設定+`/health`ポーリング方式)の実装内容を追記。
+     - aruaru-db: `windows_url`/`linux_url`を`Some`へ更新(v0.1.0タグCI再検証完了、
+       `gh release view`で実アセット確認済み)。`android_status`にクラスタ管理API
+       (`GET /admin/cluster`)へ接続するモニタリングクライアント(`tokyo.runo.aruarudb`)
+       の実装内容を追記。
+     - aruaru-llm: `distribution`を新規`Some`化。`android_status`にリモートLLM
+       サーバー接続+簡易チャットUI(`tokyo.runo.aruarullm`、`POST /v1/chat`)を追記
+       (`X-Aruaru-Llm-Accel-Backend`ヘッダーはRust側未対応と正直に明記)。
+     - open-easy-web: `distribution`を新規`Some`化。`android_status`にネストした
+       `server/`のバイナリを`cargo ndk`でarm64-v8a/x86_64向けにクロスコンパイルし
+       `jniLibs`へ同梱する方式(`tokyo.runo.openeasyweb`)を追記。
+     - open-raid-z: `windows_url`/`linux_url`を`Some`へ更新(v0.1.0タグCI再検証完了、
+       実アセット確認済み)。
+     - open-web-server: `android_status`を、Kotlinシェル到達止まりの旧文言から、
+       実際に実装済みの3電源プロファイル(省電力/通常/常時電源接続、ポーリング間隔差・
+       WakeLock・電源抜き差し確認ダイアログ)+`OPEN_WEB_SERVER_ACCEL_BACKEND`環境変数
+       連携(現状値保持のみ)の内容へ更新。
+     - いずれも「gradle assembleDebug成功、実機/エミュレータでの疎通・動作検証は未実施」
+       という正直な制限を`android_status`文言内に明記(誇張しない)。
+  2. **検証**: `cargo build --tests`成功、`cargo test`**29件全green**(既存テスト
+     `runo_index_page_shows_distribution_status_for_installable_projects_only`が
+     引き続きgreenであることを確認、新規テストは追加せず——今回はデータ更新のみで
+     既存の`Distribution`レンダリングロジック自体は変更していないため)。
+     `cargo run --release`で実サーバーを起動し、`curl http://127.0.0.1:3000/runo`
+     で取得した実HTML本文に`tokyo.runo.rpoem`・`tokyo.runo.aruarudb`・
+     `tokyo.runo.aruarullm`・`tokyo.runo.openeasyweb`・
+     `OPEN_WEB_SERVER_ACCEL_BACKEND`・「CI再検証完了」(2箇所)が実在することを
+     `grep`で直接確認した(型チェック・ビルド成功のみで完了と報告していない)。
+  - 次にすべきこと: (1) 各Androidクライアントの実機/エミュレータでの実地検証、
+    (2) aruaru-llm/open-easy-webのWindows/Linux版インストーラー3点セット整備、
+    (3) open-web-serverの`OPEN_WEB_SERVER_ACCEL_BACKEND`のRust側実処理配線。
+
 - **2026-07-24 `/runo`ページの各プロジェクトカードに「配布状況」セクションを追加
   + 開発状況の紹介文を最新化(ユーザー指示「すべてのリポジトリの開発状況や
   追加した機能などをruno.tokyoのプロジェクトシリーズ内で紹介しなおして。

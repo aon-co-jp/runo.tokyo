@@ -102,7 +102,7 @@ pub const PROJECTS: &[Project] = &[
         distribution: Some(Distribution {
             windows_url: Some("https://github.com/aon-co-jp/RPoem/releases/latest"),
             linux_url: Some("https://github.com/aon-co-jp/RPoem/releases/latest"),
-            android_status: None,
+            android_status: Some("2026-07-24、リモートサーバー接続クライアント(パッケージtokyo.runo.rpoem)を新規実装——RPoem自体はVPS/デスクトップ側で稼働するサーバー層のため、端末上でバイナリを起動せず接続先URL設定+/healthポーリングのUIとして設計。省電力/通常/常時電源接続の3電源プロファイル+電源抜き差し確認ダイアログに対応。gradle assembleDebug成功、実機/エミュレータでの疎通検証は未実施"),
             note: "",
         }),
     },
@@ -181,10 +181,10 @@ pub const PROJECTS: &[Project] = &[
         live_url: None,
         live_status: None,
         distribution: Some(Distribution {
-            windows_url: None,
-            linux_url: None,
-            android_status: None,
-            note: "インストーラー3点セットは追加済みだが、v0.1.0タグのRelease自動ビルドがCIで失敗中(siblingリポジトリRS-JSONのpath依存が原因、修正済みだが再タグでの検証待ち)——現時点でダウンロード可能なバイナリ配布は無い",
+            windows_url: Some("https://github.com/aon-co-jp/aruaru-db/releases/latest"),
+            linux_url: Some("https://github.com/aon-co-jp/aruaru-db/releases/latest"),
+            android_status: Some("2026-07-24、クラスタ管理API(GET /admin/cluster)へ接続するモニタリングクライアント(パッケージtokyo.runo.aruarudb)を新規実装。省電力/通常/常時電源接続の3電源プロファイル(ポーリング間隔差+WakeLock)+電源抜き差し確認ダイアログに対応。gradle assembleDebug成功、実機/エミュレータでの疎通検証は未実施"),
+            note: "v0.1.0タグのCI再検証完了(2026-07-24、gh run/gh releaseで実アセット実在を確認済み)",
         }),
     },
     Project {
@@ -196,7 +196,12 @@ pub const PROJECTS: &[Project] = &[
         role_ja: "aruaruエコシステム(aruaru-tokyo・aruaru-db・e-gov.info・karu.tokyo等)共通の「AIチャットコマース」応答サービス。Python向けのAIライブラリとLLMをRust向けの書き直しを開始しました。ベースになったのは、aruaru-llm(開発途中)＋open-cuda(Windows＋MAC＋LINUX互換 ＆ INTEL＋AMD＋nVIDIA互換を開発途中です。)。(開発開始日: 2026-07-18)",
         live_url: None,
         live_status: None,
-        distribution: None,
+        distribution: Some(Distribution {
+            windows_url: None,
+            linux_url: None,
+            android_status: Some("2026-07-24、リモートLLMサーバーへの接続設定+簡易チャットUI(POST /v1/chat、パッケージtokyo.runo.aruarullm)を新規実装。省電力/常時電源接続版はX-Aruaru-Llm-Accel-Backendヘッダーを付与するがRust側は現時点で未対応(将来対応課題)。3電源プロファイル+電源抜き差し確認ダイアログに対応。gradle assembleDebug成功、実機/エミュレータでの疎通検証は未実施"),
+            note: "Windows/Linux版インストーラーは未整備(サーバー本体の3点セット未着手)",
+        }),
     },
     Project {
         name: "aruaru-tokyo",
@@ -273,7 +278,12 @@ pub const PROJECTS: &[Project] = &[
         role_ja: "「第二のKUSANAGI」——アプリのアップロード後にIPアドレスで起動し、ドメイン登録・HTTPS化を簡単に自動適用できる運用ツール(Rust → WebAssembly、フレームワーク不使用)。2026-07-23、無料DDNS(DuckDNS)連携の「簡単ドメイン設定ウィザード」を追加(トークン入力・希望サブドメイン名入力・セットアップ&疎通確認ボタン、一覧/削除にも対応)——実DuckDNSトークンでの実接続検証は未実施と正直に開示。(開発開始日: 2026-07-17)",
         live_url: Some("https://easy-web.tokyo/"),
         live_status: Some("稼働中"),
-        distribution: None,
+        distribution: Some(Distribution {
+            windows_url: None,
+            linux_url: None,
+            android_status: Some("2026-07-24、server/配下のネストしたワークスペースのバイナリをcargo ndkでarm64-v8a/x86_64向けにクロスコンパイルしjniLibsへ同梱(パッケージtokyo.runo.openeasyweb)。ブラウザで開くボタン方式(ログインUIは組み込まず)。3電源プロファイル+電源抜き差し確認ダイアログに対応。gradle assembleDebug成功、実機/エミュレータでの動作検証は未実施"),
+            note: "Windows/Linux版インストーラー3点セットは未整備",
+        }),
     },
     Project {
         name: "open-raid-z",
@@ -285,10 +295,10 @@ pub const PROJECTS: &[Project] = &[
         live_url: None,
         live_status: None,
         distribution: Some(Distribution {
-            windows_url: None,
-            linux_url: None,
+            windows_url: Some("https://github.com/aon-co-jp/open-raid-z/releases/latest"),
+            linux_url: Some("https://github.com/aon-co-jp/open-raid-z/releases/latest"),
             android_status: None,
-            note: "インストーラー3点セットは追加済みだが、v0.1.0タグのRelease自動ビルドがCIで失敗中(Windows専用crateのfeature設定を修正済みだが、再タグでの検証待ち)——現時点でダウンロード可能なバイナリ配布は無い",
+            note: "v0.1.0タグのCI再検証完了(2026-07-24、gh run/gh releaseで実アセット実在を確認済み)",
         }),
     },
     Project {
@@ -303,7 +313,7 @@ pub const PROJECTS: &[Project] = &[
         distribution: Some(Distribution {
             windows_url: Some("https://github.com/aon-co-jp/open-web-server/releases/latest"),
             linux_url: Some("https://github.com/aon-co-jp/open-web-server/releases/latest"),
-            android_status: Some("開発中(Kotlinシェル+APK生成まで到達、adb実機/エミュレータ確認は未完了——配布可能ではない)"),
+            android_status: Some("2026-07-24、省電力/通常/常時電源接続の3電源プロファイルを実装(ポーリング間隔差・WakeLockは常時電源接続版のみ・電源抜き差し時に切替を確認するダイアログ、既定推奨は省電力)。OPEN_WEB_SERVER_ACCEL_BACKEND環境変数でモードをRust側へ連携(現状は値の保持のみで実処理は未配線)。gradle assembleDebug成功、adb実機/エミュレータ確認は未完了——配布可能ではない"),
             note: "",
         }),
     },
