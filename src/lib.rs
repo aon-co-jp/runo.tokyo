@@ -486,6 +486,21 @@ fn render_runo_link_section() -> String {
         .to_string()
 }
 
+/// ページ最上部に置く、DuckDNS対応の簡単ドメイン設定の一文紹介
+/// (日英併記、ユーザー指示原文を採用、2026-07-24追加)。
+fn render_easy_free_domain_top_banner() -> String {
+    r##"<section class="block" id="easy-free-domain-setup" style="margin-top:0;">
+<p><strong>Easy Free-Domain Setup, DuckDNS(簡単ドメイン設定)</strong> —
+固定IPではないDDNS環境向けに、無料サブドメイン(DuckDNS)の取得〜自動更新を
+open-web-server側で一気通貫にセットアップします。複数のドメイン提供で、
+サブドメイン取得可能です。</p>
+<p class="muted">For dynamic-IP (non-fixed-IP) environments, get a free DuckDNS
+subdomain and set up automatic updates end-to-end via open-web-server.
+Multiple base domains are offered to choose your subdomain from.</p>
+</section>"##
+        .to_string()
+}
+
 /// 「無料サブドメイン取得+自動更新」機能の紹介バナー(日英併記、
 /// 2026-07-24追加)。DuckDNSのような無料サブドメイン発行サービスを、
 /// runo.tokyo自身のドメイン配下(ConoHa DNS管理)で提供する
@@ -496,9 +511,10 @@ fn render_runo_link_section() -> String {
 fn render_free_subdomain_banner() -> String {
     r##"<section class="block" id="free-subdomain">
 <h2>🌐 無料サブドメイン取得サービス / Free Subdomain Service</h2>
-<p>runo.tokyo配下のサブドメインを無料で取得し、固定IPが無くても自動的に
-最新のIPアドレスへ更新し続けられる機能を提供しています(DuckDNSのような
-無料DDNSサービスと同種の仕組みです)。詳しくは
+<p>runo.tokyo配下(および複数の提供ドメインから選択可能)のサブドメインを
+無料で取得し、固定IPが無くても自動的に最新のIPアドレスへ更新し続けられる
+機能を提供しています(DuckDNSのような無料DDNSサービスと同種の仕組みです)。
+詳しくは
 <a href="https://github.com/aon-co-jp/open-easy-web" target="_blank" rel="noopener noreferrer">open-easy-web</a>
 をご覧ください。</p>
 <p class="muted">Get a free subdomain under runo.tokyo and keep it automatically pointed at your
@@ -530,6 +546,8 @@ pub fn top_page_html() -> String {
   <p>東京都西部の暮らし・テレワークと、open-cosmoエコシステムの入口</p>
 </header>
 
+{easy_free_domain_top}
+
 <div class="quick-links">
   <a href="#municipalities">自治体リンク集</a>
   <a href="#drone">ドローン空撮紹介</a>
@@ -560,6 +578,7 @@ pub fn top_page_html() -> String {
         blog_url = BLOG_POST_URL,
         blog_title_ja = html_escape(BLOG_POST_TITLE_JA),
         blog_title_en = html_escape(BLOG_POST_TITLE_EN),
+        easy_free_domain_top = render_easy_free_domain_top_banner(),
         catchcopy = render_catchcopy_section(),
         intro = render_intro_section(),
         municipalities = render_municipality_section(),
