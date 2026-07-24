@@ -486,6 +486,30 @@ fn render_runo_link_section() -> String {
         .to_string()
 }
 
+/// 「無料サブドメイン取得+自動更新」機能の紹介バナー(日英併記、
+/// 2026-07-24追加)。DuckDNSのような無料サブドメイン発行サービスを、
+/// runo.tokyo自身のドメイン配下(ConoHa DNS管理)で提供する
+/// (`open-easy-web`/`open-web-server`側の`DnsProvider`実装、詳細は
+/// そちら側のCLAUDE.md参照)。**寄付リンクは未準備のためプレースホルダ
+/// (`#`)のまま、「準備中」である旨を正直に表示する**
+/// (実在しないURLをでっち上げない、ユーザー指示)。
+fn render_free_subdomain_banner() -> String {
+    r##"<section class="block" id="free-subdomain">
+<h2>🌐 無料サブドメイン取得サービス / Free Subdomain Service</h2>
+<p>runo.tokyo配下のサブドメインを無料で取得し、固定IPが無くても自動的に
+最新のIPアドレスへ更新し続けられる機能を提供しています(DuckDNSのような
+無料DDNSサービスと同種の仕組みです)。詳しくは
+<a href="https://github.com/aon-co-jp/open-easy-web" target="_blank" rel="noopener noreferrer">open-easy-web</a>
+をご覧ください。</p>
+<p class="muted">Get a free subdomain under runo.tokyo and keep it automatically pointed at your
+current IP address, even without a fixed IP — similar to free DDNS services like DuckDNS.
+See <a href="https://github.com/aon-co-jp/open-easy-web" target="_blank" rel="noopener noreferrer">open-easy-web</a> for details.</p>
+<p><strong>ご寄付はこちらからどうぞ!</strong>(<a href="#" title="寄付リンクは準備中です">準備中 / Coming soon</a>) /
+<strong>Donations welcome!</strong> (<a href="#" title="Donation link is not ready yet">link coming soon</a>)</p>
+</section>"##
+        .to_string()
+}
+
 /// TOPページのHTML本文を生成する(純粋関数、テスト容易)。
 pub fn top_page_html() -> String {
     format!(
@@ -524,6 +548,8 @@ pub fn top_page_html() -> String {
 
 {subservices}
 
+{free_subdomain}
+
 {runo_link}
 
 <footer>&copy; 2026 runo.tokyo (Rust + Poem)</footer>
@@ -540,6 +566,7 @@ pub fn top_page_html() -> String {
         drone = render_drone_section(),
         apps = render_app_directory_section(),
         subservices = render_subservices_section(),
+        free_subdomain = render_free_subdomain_banner(),
         runo_link = render_runo_link_section(),
     )
 }

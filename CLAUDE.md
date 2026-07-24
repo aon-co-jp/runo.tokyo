@@ -429,3 +429,27 @@ DB非依存・1バイナリ完結。
   open-aruaru-runo-iLumi → aon) — エコシステム全体のメタ索引リポジトリ
 - [open-cosmo](https://github.com/aon-co-jp/open-cosmo)(旧称open-runo、2026-07-20にGitHub上で改名) — Rust→WASM/tokio+hyperのopen-cosmoエコシステム本体
 - [open-raid-z](https://github.com/aon-co-jp/open-raid-z) — 開発ルールの正本
+
+## HANDOFF追記(2026-07-24) — 無料サブドメインサービスの紹介バナー追加
+
+- `open-easy-web`/`open-web-server`側で実装した「aon.co.jp/runo.tokyo
+  (および将来nasa.tokyo/icpo.tokyo)配下への無料サブドメイン取得+
+  自動更新(DDNS)機能」(`DnsProvider`トレイト、`ConohaDnsProvider`実装、
+  runo.tokyoはConoHa DNS管理)の紹介バナーをTOPページに追加した
+  (`render_free_subdomain_banner()`、日英併記、`render_runo_link_section`
+  の直前に配置)。
+- 寄付リンクは実リンク未準備のため`href="#"`のプレースホルダのままとし、
+  「準備中 / Coming soon」と正直に表示している。
+- **検証**: `cargo build --tests`/`cargo test`(29件全green、既存の
+  レンダリングロジックへの変更は無し・新規テストは今回追加していない
+  ——静的セクション追加のみのため)。実バイナリ起動+`curl`でHTTP 200・
+  バナー本文(「無料サブドメイン取得サービス」「Donations welcome」)の
+  実在を確認済み。
+- **正直な未検証事項**: 実ConoHa DNS API(API利用者ID/パスワード/
+  テナントID)でのサブドメイン発行・実GitHub OAuthでのログイン・実
+  PostgreSQL/aruaru-dbへのデュアルライトはいずれも`open-web-server`側の
+  実装であり、このリポジトリ側では未検証(バナー表示のみが本リポジトリの
+  担当範囲)。`nasa.tokyo`/`icpo.tokyo`はサイト自体が未構築のため、
+  紹介バナーの追加対象からは除外している(ベースドメイン選択肢としては
+  `open-web-server`側の`ConohaDnsProvider::SUPPORTED_BASE_DOMAINS`に
+  含まれる)。
