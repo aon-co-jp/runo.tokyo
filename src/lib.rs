@@ -562,6 +562,15 @@ pub fn top_page_html() -> String {
   runo(るの).tokyoと名付けました。東京都あきる野市を含む東京都と軽井沢と世界を
   オンラインでつなぎ、郊外でAUDIOでも心地良く聴きながらリモートワークや
   テレワークする生活はいかがですか？</p>
+  <p class="lang" style="font-size:0.85rem;">🔗 関連サイト / Related sites:
+  <a href="https://aon.tokyo/">aon.tokyo</a> ・
+  <a href="https://aon.tokyo/cancer">aon.tokyo/cancer</a> ・
+  <a href="https://aon.co.jp/">aon.co.jp</a> ・
+  <a href="https://aruaru.tokyo/">aruaru.tokyo</a> ・
+  <a href="https://karu.tokyo/">karu.tokyo</a> ・
+  <a href="https://icpo.tokyo/">icpo.tokyo</a> ・
+  <a href="https://fbi.tokyo/">fbi.tokyo</a> ・
+  <a href="https://runo.tokyo/">runo.tokyo</a></p>
 </header>
 
 {easy_free_domain_top}
