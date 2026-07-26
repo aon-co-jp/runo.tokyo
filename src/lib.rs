@@ -486,6 +486,40 @@ fn render_runo_link_section() -> String {
         .to_string()
 }
 
+/// ページ最上部に置く、民間のガン治療法に関する報道・情報セクション
+/// (ユーザー提供のindex.html内容を移植、2026-07-26)。報道・公開情報の
+/// 紹介のみで、独自の医療的な効能・安全性の主張は行わない。
+fn render_cancer_news_section() -> String {
+    r##"<section class="block" id="cancer-news" style="margin-top:0;">
+  <h2>民間のガン治療法に関する報道 / News on Cancer Treatment Research</h2>
+  <p style="font-size:.85rem;color:var(--muted);">以下は報道・公開情報の紹介のみで、独自の医療的な効能・安全性の主張は行っていません。 / The items below are simply introduced as reported information; no independent medical claims are made.</p>
+  <ul style="padding-left:1.2rem; margin:0;">
+    <li style="margin-bottom:0.8rem;">
+      衝撃波で腫瘍を破壊「メスも針も使わない」肝臓がんの新治療法　大阪公立大の研究チームが特定臨床研究を開始　来年中の薬事承認を目指す<br>
+      <span style="color:var(--muted);">Destroying Tumors with Shockwaves — a New "No Scalpel, No Needle" Liver Cancer Treatment: Osaka Metropolitan University Research Team Begins Specified Clinical Research, Aiming for Drug/Medical Device Approval Within the Next Year</span><br>
+      <a href="https://www.youtube.com/watch?v=hRFXYCGX8Fo" target="_blank" rel="noopener noreferrer">▶️ YouTube</a> /
+      <a href="https://www.facebook.com/masahiro.ishizuka.54?locale=ja_JP" target="_blank" rel="noopener noreferrer">📘 Facebook</a>
+    </li>
+    <li style="margin-bottom:0.8rem;">
+      マックトリガー。世界初！からだ自身が"がん治療"　九州大学が開発<br>
+      <span style="color:var(--muted);">Mac Trigger. A World First! The Body Itself Fights Cancer — Developed by Kyushu University</span><br>
+      <a href="https://www.youtube.com/watch?v=84EkcJmgmnQ" target="_blank" rel="noopener noreferrer">▶️ YouTube</a> /
+      <a href="https://www.facebook.com/reel/1793445321653771?locale=ja_JP" target="_blank" rel="noopener noreferrer">📘 Facebook(予備 / backup)</a>
+    </li>
+    <li style="margin-bottom:0.8rem;">
+      <a href="https://aon.tokyo/cancer" target="_blank" rel="noopener noreferrer">民間のガン治療法についての情報は aon.tokyo/cancer をご覧ください</a><br>
+      <span style="color:var(--muted);">For information on non-clinical/private-sector cancer treatment approaches, see aon.tokyo/cancer.</span>
+    </li>
+    <li style="margin-bottom:0.4rem;"><a href="https://www.youtube.com/results?search_query=%E3%81%8C%E3%82%93%20%E6%B2%BB%E7%99%82%E6%B3%95" target="_blank" rel="noopener">▶️ がんの治療法について調べる</a> / <a href="https://www.youtube.com/results?search_query=cancer%20treatment%20methods" target="_blank" rel="noopener">▶️ Cancer treatment methods</a></li>
+    <li style="margin-bottom:0.4rem;"><a href="https://www.google.com/search?tbm=vid&q=%E3%81%8C%E3%82%93%20%E6%B2%BB%E7%99%82%E6%B3%95" target="_blank" rel="noopener">🎬 がんの治療法の動画を調べる</a> / <a href="https://www.google.com/search?tbm=vid&q=cancer%20treatment%20methods" target="_blank" rel="noopener">🎬 Cancer treatment method videos</a></li>
+    <li style="margin-bottom:0.4rem;"><a href="https://www.youtube.com/results?search_query=%E3%83%90%E3%83%8A%E3%83%8A%20%E3%82%AC%E3%83%B3%E6%B2%BB%E7%99%82%E6%B3%95" target="_blank" rel="noopener">▶️ 「バナナ ガン治療法」で調べる</a> / <a href="https://www.youtube.com/results?search_query=banana%20cancer%20treatment" target="_blank" rel="noopener">▶️ Search "banana cancer treatment"</a></li>
+    <li style="margin-bottom:0.4rem;"><a href="https://www.youtube.com/results?search_query=%E9%87%8D%E2%A3%B0%E6%B0%B4%20%E3%82%AC%E3%83%B3%E6%B2%BB%E7%99%82%E6%B3%95" target="_blank" rel="noopener">▶️ 「重曹水 ガン治療法」で調べる</a> / <a href="https://www.youtube.com/results?search_query=baking%20soda%20water%20cancer%20treatment" target="_blank" rel="noopener">▶️ Search "baking soda water cancer treatment"</a></li>
+    <li style="margin-bottom:0.4rem;"><a href="https://www.youtube.com/results?search_query=%E3%82%AF%E3%82%A8%E3%83%B3%E9%85%B8%E6%B0%B4%20%E3%82%AC%E3%83%B3%E6%B2%BB%E7%99%82%E6%B3%95" target="_blank" rel="noopener">▶️ 「クエン酸水 ガン治療法」で調べる</a> / <a href="https://www.youtube.com/results?search_query=citric%20acid%20water%20cancer%20treatment" target="_blank" rel="noopener">▶️ Search "citric acid water cancer treatment"</a></li>
+  </ul>
+</section>"##
+        .to_string()
+}
+
 /// ページ最上部に置く、姉妹サイトkaru.tokyoへのリンク集(2026-07-24追加)。
 fn render_karu_tokyo_links() -> String {
     r##"<section class="block" id="karu-tokyo-links">
@@ -554,6 +588,7 @@ pub fn top_page_html() -> String {
 </head>
 <body>
 <main>
+{cancer_news}
 <p class="blog-link"><a href="{blog_url}" target="_blank" rel="noopener">📝 {blog_title_ja}</a> / <a href="{blog_url}" target="_blank" rel="noopener">{blog_title_en}</a></p>
 <header>
   <h1><span>runo</span>.tokyo</h1>
@@ -604,6 +639,7 @@ pub fn top_page_html() -> String {
 </body>
 </html>"##,
         STYLE = STYLE,
+        cancer_news = render_cancer_news_section(),
         blog_url = BLOG_POST_URL,
         blog_title_ja = html_escape(BLOG_POST_TITLE_JA),
         blog_title_en = html_escape(BLOG_POST_TITLE_EN),
@@ -863,7 +899,7 @@ mod tests {
 
     #[test]
     fn top_page_has_drone_placeholder_not_fake_video() {
-        let html = top_page_html();
+        let html = render_drone_section();
         assert!(html.contains("準備中"));
         assert!(html.contains("ドローン"));
         assert!(!html.contains("youtube.com/watch"));
