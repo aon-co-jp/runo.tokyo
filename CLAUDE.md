@@ -64,6 +64,31 @@ DB非依存・1バイナリ完結。
   の実在を確認してから行うこと(過去に壊れていた実例あり、詳細は
   `PORTING.md`参照)。
 
+## HANDOFF追記(2026-07-28) rs-syncデモ廃止に伴う参照削除・関連作業横串メモ
+
+ユーザー指示「runo.tokyo/rs-syncはデモ用はやめて削除して」への対応
+(実体はVPS/RS-Sync側の作業、このリポジトリ側は参照の後始末のみ)。
+
+1. **`src/lib.rs`の`SUB_SERVICES`からrs-syncエントリを削除**
+   (廃止済みリンクをTOPページから除去)。
+2. **`src/meta_index.rs`の`RS-Sync`プロジェクトカードの`live_url`を
+   `None`化**、`live_status`を「runo.tokyo/rs-syncのデモ運用は終了、
+   easy-web.tokyoへ移設中」に更新(推測でURLを埋めない、既存の
+   自治体リンクと同じ「正直な開示」方針を踏襲)。
+3. **検証**: `cargo test`29件全green。VPS本番反映
+   (`git pull`→`cargo build --release`→`systemctl restart`)、
+   `curl https://runo.tokyo/`のHTML本文に"rs-sync"の文字列が0件で
+   あることを確認済み。
+4. **関連作業・横串メモ**: 同日、RS-Sync(open-giteaプロバイダの認証
+   欠落バグ修正+本番をeasy-web.tokyoへ移設)・open-redmine
+   (runo.tokyoテナント削除+デモリンク追加)・open-easy-web
+   (外部ツールリンクのURL更新)でも同時に作業した。詳細・未着手事項は
+   [RS-Sync](https://github.com/aon-co-jp/RS-Sync/blob/main/CLAUDE.md)の
+   同日HANDOFFを参照(このセッションの続きはどのリポジトリから再開しても
+   良いよう、各リポジトリのCLAUDE.mdに同じ日付のエントリを置いてある)。
+  - 次にすべきこと: このリポジトリ側に残作業は無し(rs-sync本体の
+    未着手事項はRS-Sync側CLAUDE.md参照)。
+
 ## HANDOFF(直近の作業ログ、上が最新)
 
 - **2026-07-24(さらに追記) 5リポジトリ分のAndroidクライアント新規実装+aruaru-db/open-raid-zのRelease確定を`/runo`配布状況へ反映
