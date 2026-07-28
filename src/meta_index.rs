@@ -453,8 +453,8 @@ pub const PROJECTS: &[Project] = &[
         has_porting: false,
         has_claude: true,
         role_ja: "GitHub / RS-Git / Gitea / Gitbucket間で、アカウント登録・同期ジョブ設定(一方向/双方向)・スケジュール設定・手動実行ができるリポジトリ同期・バックアップWEBアプリ。VPS上の既存cronスクリプトを土台に汎用化。GitHubプロバイダのみ実機(実HTTP・実git push)で検証済み、RS-Git/Gitea/Gitbucketはドキュメントベースの実装のみで実機未検証と正直に開示。(開発開始日: 2026-07-22)",
-        live_url: Some("https://runo.tokyo/rs-sync"),
-        live_status: Some("稼働中(MVP、GitHubプロバイダのみ実機検証済み)"),
+        live_url: None,
+        live_status: Some("runo.tokyo/rs-syncのデモ運用は終了、easy-web.tokyoへ移設中"),
         distribution: Some(Distribution {
             windows_url: None,
             linux_url: None,
