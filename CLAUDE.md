@@ -64,6 +64,16 @@ DB非依存・1バイナリ完結。
   の実在を確認してから行うこと(過去に壊れていた実例あり、詳細は
   `PORTING.md`参照)。
 
+## HANDOFF追記(2026-08-04) TOPページに2件目のブログリンクを追加
+
+TOPページ(`top_page_html`)に2件目のブログリンク(「上下水道配管や屋根瓦
+などのハイテク新素材。パナホームとヤマダホームのコーキングレス外壁」、
+`ameblo.jp/www-aon/entry-12974607800`)を、既存の1件目リンク直下に同じ
+`.blog-link`スタイルで追加(`BLOG_POST2_URL`/`BLOG_POST2_TITLE_JA`定数、
+`blog_url2`/`blog_title2_ja`をformat!へ渡すよう更新)。検証: `cargo build
+--release`成功、VPS本番反映(`git pull`→`cargo build --release`→
+`systemctl restart runo-tokyo`)、実インターネット経由での表示確認済み。
+
 ## HANDOFF追記(2026-07-28) rs-syncデモ廃止に伴う参照削除・関連作業横串メモ
 
 ユーザー指示「runo.tokyo/rs-syncはデモ用はやめて削除して」への対応
