@@ -244,6 +244,10 @@ const BLOG_POST_TITLE_JA: &str = "プログラム言語やフレームワーク�
 /// 意訳したもの(URLは日英共通、リンク先は変えない)。
 const BLOG_POST_TITLE_EN: &str = "The benefits of migrating everything — programming languages, frameworks, and more — to Rust";
 
+/// 2件目のブログ記事(ユーザー指示、2026-08-04追記)。
+const BLOG_POST2_URL: &str = "https://ameblo.jp/www-aon/entry-12974607800.html";
+const BLOG_POST2_TITLE_JA: &str = "上下水道配管や屋根瓦などのハイテク新素材。パナホームとヤマダホームのコーキングレス外壁";
+
 /// 各段落のテーマに沿った検索クエリ(ユーザー提示の例をそのまま使用)。
 /// 段落0(注文住宅・シアタールーム・地方移住)と段落3(Claude Code)は
 /// 2つのクエリ例が提示されているため、それぞれ2セット掲載する。
@@ -588,6 +592,7 @@ pub fn top_page_html() -> String {
 <main>
 {cancer_news}
 <p class="blog-link"><a href="{blog_url}" target="_blank" rel="noopener">📝 {blog_title_ja}</a> / <a href="{blog_url}" target="_blank" rel="noopener">{blog_title_en}</a></p>
+<p class="blog-link"><a href="{blog_url2}" target="_blank" rel="noopener">📝 {blog_title2_ja}</a></p>
 <header>
   <h1><span>runo</span>.tokyo</h1>
   <p>東京都西部の暮らし・テレワークと、open-cosmoエコシステムの入口</p>
@@ -641,6 +646,8 @@ pub fn top_page_html() -> String {
         blog_url = BLOG_POST_URL,
         blog_title_ja = html_escape(BLOG_POST_TITLE_JA),
         blog_title_en = html_escape(BLOG_POST_TITLE_EN),
+        blog_url2 = BLOG_POST2_URL,
+        blog_title2_ja = html_escape(BLOG_POST2_TITLE_JA),
         easy_free_domain_top = render_easy_free_domain_top_banner(),
         karu_tokyo_links = render_karu_tokyo_links(),
         catchcopy = render_catchcopy_section(),
