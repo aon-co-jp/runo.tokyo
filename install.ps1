@@ -1,4 +1,4 @@
-# runo.tokyo installer for Windows.
+﻿# runo.tokyo installer for Windows.
 # ソースからビルドしてインストールする(ビルド済みバイナリの署名/配布
 # パイプラインは今回未整備、他のRS-系リポジトリと同じ暫定方式)。
 # 必要なもの: git, Rustツールチェーン(無ければwinget経由で自動導入)。
