@@ -658,44 +658,23 @@ fn render_lang_switcher(current: Lang, path: &str) -> String {
         .join(" · ")
 }
 
-pub const META_INDEX_STYLE: &str = r#"
-  .meta-index main { max-width: 980px; }
-  .lang-switch { text-align:center; font-size:.78rem; margin-bottom:1.5rem; line-height:2; }
-  .lang-switch a { text-decoration:none; color:var(--muted); margin:0 .15rem; }
-  .lang-switch a.current { color:var(--accent-2); font-weight:700; }
-  .meta-intro { color:var(--muted); font-size:.9rem; margin-bottom:2rem; }
-  .repo-card { background:var(--bg-card); border:1px solid var(--border); border-radius:.75rem; padding:1.1rem 1.4rem; margin-bottom:1.1rem; }
-  .repo-card h3 { margin:0 0 .4rem; font-size:1.02rem; }
-  .repo-card h3 a { text-decoration:none; }
-  .repo-card p.role { color:var(--muted); font-size:.85rem; margin:0 0 .75rem; line-height:1.6; }
-  .repo-card p.live-link { font-size:.85rem; margin:0 0 .75rem; }
-  .repo-card p.live-link a { color:var(--accent-2); font-weight:600; }
-  .repo-card p.auto-sync { font-size:.8rem; color:var(--muted); margin:0 0 .6rem; }
-  .usage-box { background:rgba(47,111,237,.07); border:1px solid var(--border); border-radius:.6rem; padding:.75rem .9rem; margin:0 0 .9rem; font-size:.85rem; }
-  .usage-box strong { font-size:.88rem; }
-  .usage-box p { margin:.35rem 0 .6rem; color:var(--muted); line-height:1.5; }
-  .usage-links { display:flex; gap:.5rem; flex-wrap:wrap; }
-  .usage-btn { display:inline-block; text-decoration:none; background:var(--accent-2); color:#fff; border-radius:999px; padding:.35rem 1rem; font-size:.82rem; font-weight:600; }
-  .dist-box { background:rgba(34,197,94,.08); border:1px solid var(--border); border-radius:.6rem; padding:.75rem .9rem; margin:0 0 .9rem; font-size:.85rem; }
-  .dist-box strong { font-size:.88rem; }
-  .dist-links { display:flex; gap:.5rem; flex-wrap:wrap; margin:.35rem 0; }
-  .dist-btn { display:inline-block; text-decoration:none; background:#16a34a; color:#fff; border-radius:999px; padding:.35rem 1rem; font-size:.82rem; font-weight:600; }
-  .dist-android { margin:.4rem 0 0; color:var(--muted); }
-  .dist-note { margin:.4rem 0 0; color:var(--muted); font-size:.8rem; line-height:1.5; }
-  ul.file-list { list-style:none; margin:0 0 .75rem; padding:0; font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace; font-size:.82rem; }
-  ul.file-list li { padding:.25rem 0; border-bottom:1px dashed var(--border); }
-  ul.file-list li:last-child { border-bottom:none; }
-  ul.file-list a { text-decoration:none; color:var(--accent-2); }
-  .file-missing { color:var(--muted); font-style:italic; }
-  .live-fetch-row { display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; }
-  .live-fetch-btn { font-size:.78rem; padding:.35rem .9rem; }
-  .live-fetch-result { font-size:.78rem; color:var(--muted); }
-  .live-fetch-result .ok { color:var(--fg); }
-  ul.file-tree { list-style:none; margin:.6rem 0 0; padding:.6rem .8rem; font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace; font-size:.8rem; background:rgba(148,163,184,.08); border-radius:.5rem; }
-  ul.file-tree li { padding:.15rem 0; }
-  ul.file-tree a { text-decoration:none; color:var(--accent-2); }
-  ul.file-tree .tree-error { color:var(--muted); font-style:italic; }
-"#;
+/// `render_page`/`render_single_project_page`が末尾に埋め込む、`static/runo.js`
+/// 向けのi18nラベルのデータアイランド(`window.RUNO_I18N = {...}`)を組み立てる。
+/// 元々は5個のラベル文字列がそれぞれ`<script>`本文へ直接文字列展開されて
+/// いたが、スクリプト本体自体を`static/runo.js`へ外出しした都合上、
+/// この小さなJSONオブジェクトだけをHTML側からJSへ橋渡しする
+/// (5言語ラベル以外の動的データは含まない)。
+fn render_i18n_data_island(s: &crate::i18n::IndexStrings) -> String {
+    format!(
+        r#"<script>window.RUNO_I18N = {{"fetch_loading":{loading},"fetch_fail":{fail},"field_stars":{stars},"field_updated":{updated},"field_default_branch":{branch}}};</script>
+<script src="/runo.js" defer></script>"#,
+        loading = serde_json::to_string(s.fetch_loading).unwrap_or_default(),
+        fail = serde_json::to_string(s.fetch_fail).unwrap_or_default(),
+        stars = serde_json::to_string(s.field_stars).unwrap_or_default(),
+        updated = serde_json::to_string(s.field_updated).unwrap_or_default(),
+        branch = serde_json::to_string(s.field_default_branch).unwrap_or_default(),
+    )
+}
 
 /// `repo`(`owner/repo`)に一致する`Project`を1件だけ探す。
 pub fn find_project(repo: &str) -> Option<&'static Project> {
@@ -721,7 +700,7 @@ pub fn render_single_project_page(repo: &str, lang: Lang) -> Option<String> {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{name} | runo.tokyo</title>
-<style>{STYLE}{META_INDEX_STYLE}</style>
+<link rel="stylesheet" href="/style.css">
 </head>
 <body class="meta-index">
 <main>
@@ -730,84 +709,15 @@ pub fn render_single_project_page(repo: &str, lang: Lang) -> Option<String> {
   {card}
   <footer>&copy; 2026 runo.tokyo (Rust + Poem)</footer>
 </main>
-<script>
-  async function fetchLiveInfo(repo, resultEl) {{
-    resultEl.textContent = {loading_json};
-    try {{
-      const res = await fetch('https://api.github.com/repos/' + repo, {{ headers: {{ 'Accept': 'application/vnd.github+json' }} }});
-      if (!res.ok) throw new Error('status ' + res.status);
-      const data = await res.json();
-      resultEl.innerHTML = '<span class="ok">' + {stars_label_json} + ': ' + data.stargazers_count +
-        ' / ' + {updated_label_json} + ': ' + new Date(data.pushed_at || data.updated_at).toLocaleDateString() +
-        ' / ' + {branch_label_json} + ': ' + data.default_branch + '</span>';
-    }} catch (e) {{ resultEl.textContent = {fail_json}; }}
-  }}
-  async function fetchFileTree(repo, treeEl) {{
-    try {{
-      const res = await fetch('https://api.github.com/repos/' + repo + '/contents/', {{ headers: {{ 'Accept': 'application/vnd.github+json' }} }});
-      if (!res.ok) throw new Error('status ' + res.status);
-      const entries = await res.json();
-      if (!Array.isArray(entries)) throw new Error('unexpected response shape');
-      entries.sort((a, b) => {{ if (a.type !== b.type) return a.type === 'dir' ? -1 : 1; return a.name.localeCompare(b.name); }});
-      treeEl.innerHTML = entries.map(e => {{
-        const icon = e.type === 'dir' ? '📁' : '📄';
-        const name = e.name.replace(/[&<>"']/g, c => ({{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}})[c]);
-        return '<li>' + icon + ' <a href="' + e.html_url + '" target="_blank" rel="noopener">' + name + '</a></li>';
-      }}).join('');
-    }} catch (e) {{ treeEl.innerHTML = '<li class="tree-error">' + {tree_fail_json} + '</li>'; }}
-  }}
-  // GitHubのREADME.md本文(先頭の意味のある段落)をその場で取得し、紹介文を
-  // 常に最新のGitHubの内容と同期させる(ユーザー指示、2026-07-22:
-  // 「クリックした瞬間に、githubの最新といつも同期を取って、いつも最新の
-  // 内容を紹介して」)。取得できない場合はビルド時点の静的な紹介文
-  // (data-fallback-role)のまま変更しない。
-  function escapeHtmlLocal(s) {{ return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }}
-  async function fetchReadmeSummary(repo, roleEl) {{
-    if (!roleEl) return;
-    for (const branch of ['main', 'master']) {{
-      try {{
-        const res = await fetch('https://raw.githubusercontent.com/' + repo + '/' + branch + '/README.md');
-        if (!res.ok) continue;
-        const text = await res.text();
-        const lines = text.split('\n');
-        let summary = '';
-        for (const line of lines) {{
-          const t = line.trim();
-          if (t === '' || t.startsWith('#') || t.startsWith('>') || t.startsWith('[![') || t.startsWith('![')) continue;
-          summary = t;
-          break;
-        }}
-        if (summary) {{
-          roleEl.innerHTML = escapeHtmlLocal(summary) + ' <span class="pending">(GitHub README同期)</span>';
-        }}
-        return;
-      }} catch (e) {{ /* try next branch */ }}
-    }}
-  }}
-  document.querySelectorAll('.live-fetch-btn').forEach(btn => {{
-    const repo = btn.getAttribute('data-repo');
-    const resultEl = document.querySelector('.live-fetch-result[data-repo-result="' + repo + '"]');
-    const treeEl = document.querySelector('.file-tree[data-repo-tree="' + repo + '"]');
-    const roleEl = document.querySelector('.role[data-repo-role="' + repo + '"]');
-    btn.addEventListener('click', () => {{ fetchLiveInfo(repo, resultEl); fetchFileTree(repo, treeEl); fetchReadmeSummary(repo, roleEl); }});
-    setTimeout(() => {{ fetchLiveInfo(repo, resultEl); fetchFileTree(repo, treeEl); fetchReadmeSummary(repo, roleEl); }}, 100);
-  }});
-</script>
+{i18n_island}
 </body>
 </html>
 "#,
         html_lang = lang.html_lang(),
         dir = dir,
         name = html_escape(project.name),
-        STYLE = crate::STYLE,
-        META_INDEX_STYLE = META_INDEX_STYLE,
         card = card,
-        loading_json = serde_json::to_string(s.fetch_loading).unwrap_or_default(),
-        stars_label_json = serde_json::to_string(s.field_stars).unwrap_or_default(),
-        updated_label_json = serde_json::to_string(s.field_updated).unwrap_or_default(),
-        branch_label_json = serde_json::to_string(s.field_default_branch).unwrap_or_default(),
-        fail_json = serde_json::to_string(s.fetch_fail).unwrap_or_default(),
-        tree_fail_json = serde_json::to_string(s.fetch_fail).unwrap_or_default(),
+        i18n_island = render_i18n_data_island(&s),
     ))
 }
 
@@ -826,7 +736,7 @@ pub fn render_page(lang: Lang, canonical_path: &str) -> String {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{title}</title>
 <meta name="description" content="{intro}">
-<style>{STYLE}{META_INDEX_STYLE}</style>
+<link rel="stylesheet" href="/style.css">
 </head>
 <body class="meta-index">
 <main>
@@ -850,118 +760,7 @@ pub fn render_page(lang: Lang, canonical_path: &str) -> String {
 
   <footer>&copy; 2026 runo.tokyo (Rust + Poem) — meta index for the open-cosmo ecosystem</footer>
 </main>
-<script>
-  // 各リポジトリカードの「最新情報取得」を1関数に切り出す(手動クリックと
-  // 自動一括実行の両方から呼べるようにする)。
-  async function fetchLiveInfo(repo, resultEl) {{
-    resultEl.textContent = {loading_json};
-    try {{
-      const res = await fetch('https://api.github.com/repos/' + repo, {{
-        headers: {{ 'Accept': 'application/vnd.github+json' }}
-      }});
-      if (!res.ok) throw new Error('status ' + res.status);
-      const data = await res.json();
-      const stars = data.stargazers_count;
-      const updated = data.pushed_at || data.updated_at;
-      const branch = data.default_branch;
-      resultEl.innerHTML = '<span class="ok">' + {stars_label_json} + ': ' + stars +
-        ' / ' + {updated_label_json} + ': ' + new Date(updated).toLocaleDateString() +
-        ' / ' + {branch_label_json} + ': ' + branch + '</span>';
-    }} catch (e) {{
-      resultEl.textContent = {fail_json};
-    }}
-  }}
-
-  // リポジトリ直下のファイル/ディレクトリ一覧を、GitHub Contents API から
-  // 取得し、GitHubの「Code」タブのファイル一覧そのままの見た目(📁/📄
-  // アイコン+ファイル名+GitHub上の実ページへのリンク)で表示する
-  // (ユーザー指示、2026-07-20)。公開リポジトリの内容取得なので未認証で
-  // 取得可能・ログイン不要——リンク先も`github.com`の通常ページ
-  // (`html_url`)であり、閲覧側もログイン不要。
-  async function fetchFileTree(repo, treeEl) {{
-    try {{
-      const res = await fetch('https://api.github.com/repos/' + repo + '/contents/', {{
-        headers: {{ 'Accept': 'application/vnd.github+json' }}
-      }});
-      if (!res.ok) throw new Error('status ' + res.status);
-      const entries = await res.json();
-      if (!Array.isArray(entries)) throw new Error('unexpected response shape');
-      entries.sort((a, b) => {{
-        if (a.type !== b.type) return a.type === 'dir' ? -1 : 1;
-        return a.name.localeCompare(b.name);
-      }});
-      treeEl.innerHTML = entries.map(e => {{
-        const icon = e.type === 'dir' ? '📁' : '📄';
-        const name = e.name.replace(/[&<>"']/g, c => ({{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}})[c]);
-        return '<li>' + icon + ' <a href="' + e.html_url + '" target="_blank" rel="noopener">' + name + '</a></li>';
-      }}).join('');
-    }} catch (e) {{
-      treeEl.innerHTML = '<li class="tree-error">' + {tree_fail_json} + '</li>';
-    }}
-  }}
-
-  // GitHubのREADME.md本文(先頭の意味のある段落)をその場で取得し、紹介文を
-  // 常に最新のGitHubの内容と同期させる(ユーザー指示、2026-07-22:
-  // 「クリックした瞬間に、githubの最新といつも同期を取って、いつも最新の
-  // 内容を紹介して」)。取得できない場合はビルド時点の静的な紹介文
-  // (data-fallback-role)のまま変更しない。
-  function escapeHtmlLocal(s) {{ return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }}
-  async function fetchReadmeSummary(repo, roleEl) {{
-    if (!roleEl) return;
-    for (const branch of ['main', 'master']) {{
-      try {{
-        const res = await fetch('https://raw.githubusercontent.com/' + repo + '/' + branch + '/README.md');
-        if (!res.ok) continue;
-        const text = await res.text();
-        const lines = text.split('\n');
-        let summary = '';
-        for (const line of lines) {{
-          const t = line.trim();
-          if (t === '' || t.startsWith('#') || t.startsWith('>') || t.startsWith('[![') || t.startsWith('![')) continue;
-          summary = t;
-          break;
-        }}
-        if (summary) {{
-          roleEl.innerHTML = escapeHtmlLocal(summary) + ' <span class="pending">(GitHub README同期)</span>';
-        }}
-        return;
-      }} catch (e) {{ /* try next branch */ }}
-    }}
-  }}
-
-  document.querySelectorAll('.live-fetch-btn').forEach(btn => {{
-    const repo = btn.getAttribute('data-repo');
-    const resultEl = document.querySelector('.live-fetch-result[data-repo-result="' + repo + '"]');
-    const treeEl = document.querySelector('.file-tree[data-repo-tree="' + repo + '"]');
-    const roleEl = document.querySelector('.role[data-repo-role="' + repo + '"]');
-    btn.addEventListener('click', () => {{
-      fetchLiveInfo(repo, resultEl);
-      fetchFileTree(repo, treeEl);
-      fetchReadmeSummary(repo, roleEl);
-    }});
-  }});
-
-  // TOPページの「/runo」リンクをクリックしてこのページへ遷移してきた瞬間、
-  // 手動でボタンを押さなくても全リポジトリの最新情報(⭐Star数・最終更新・
-  // 既定ブランチ・README紹介文)と、GitHubそのままのファイル一覧を
-  // 自動的に一括取得する(ユーザー指示、2026-07-20/2026-07-22)。
-  // GitHub API(未認証)のレート制限に配慮し、同時発火ではなく400ms間隔で
-  // 順に発火させる(このリポジトリ一覧はGitHub側のプロジェクト数が少なく
-  // 現実的な待ち時間で完了する)。
-  document.querySelectorAll('.repo-card').forEach((card, i) => {{
-    const repo = card.getAttribute('data-repo');
-    const resultEl = document.querySelector('.live-fetch-result[data-repo-result="' + repo + '"]');
-    const treeEl = document.querySelector('.file-tree[data-repo-tree="' + repo + '"]');
-    const roleEl = document.querySelector('.role[data-repo-role="' + repo + '"]');
-    if (repo && resultEl && treeEl) {{
-      setTimeout(() => {{
-        fetchLiveInfo(repo, resultEl);
-        fetchFileTree(repo, treeEl);
-        fetchReadmeSummary(repo, roleEl);
-      }}, i * 400);
-    }}
-  }});
-</script>
+{i18n_island}
 </body>
 </html>
 "#,
@@ -969,20 +768,11 @@ pub fn render_page(lang: Lang, canonical_path: &str) -> String {
         dir = dir,
         title = html_escape(s.title),
         intro = html_escape(s.intro),
-        STYLE = crate::STYLE,
-        META_INDEX_STYLE = META_INDEX_STYLE,
         h1 = html_escape(s.h1),
         lang_switch = lang_switch,
         org_link_label = html_escape(s.org_link_label),
         cards = cards,
         back_to_top = html_escape(s.back_to_top),
-        loading_json = serde_json::to_string(s.fetch_loading).unwrap_or_default(),
-        stars_label_json = serde_json::to_string(s.field_stars).unwrap_or_default(),
-        updated_label_json = serde_json::to_string(s.field_updated).unwrap_or_default(),
-        branch_label_json = serde_json::to_string(s.field_default_branch).unwrap_or_default(),
-        fail_json = serde_json::to_string(s.fetch_fail).unwrap_or_default(),
-        // ファイル一覧取得失敗時の表示も、既存の「取得失敗」文言を流用する
-        // (専用の翻訳文字列を新設せず既存i18n資産を再利用、2026-07-20)。
-        tree_fail_json = serde_json::to_string(s.fetch_fail).unwrap_or_default(),
+        i18n_island = render_i18n_data_island(&s),
     )
 }

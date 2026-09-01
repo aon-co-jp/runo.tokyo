@@ -9,7 +9,7 @@ license = "MPL-2.0"
 
 [dependencies]
 poem = "3"
-tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "fs"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 # GitHub REST APIから各リポジトリの最新情報(説明文・最終更新日時・スター数)を

@@ -30,8 +30,9 @@
 //! `readme-to-rs`自体はGitHub上に独立リポジトリとして存在するため、
 //! アプリ紹介一覧(`family_apps`)にはそのGitHubリンクを引き続き掲載する。
 
+use poem::http::StatusCode;
 use poem::web::{Html, Query};
-use poem::{get, handler, IntoResponse, Route};
+use poem::{get, handler, IntoResponse, Response, Route};
 use serde::{Deserialize, Serialize};
 
 mod github_cache;
@@ -45,41 +46,6 @@ mod meta_index;
 pub fn spawn_background_tasks() {
     github_cache::spawn_background_refresh();
 }
-
-pub(crate) const STYLE: &str = r#"
-  :root { color-scheme: light dark; --bg:#fdf6ec; --bg-card:#ffffff; --fg:#2c2418; --muted:#8a7f6b; --accent:#ff7a45; --accent-2:#2f6fed; --border:#eadfc9; }
-  @media (prefers-color-scheme: dark) { :root { --bg:#1a1712; --bg-card:#24201a; --fg:#f1ece0; --muted:#b3a893; --accent:#ff9466; --accent-2:#6ea1ff; --border:#3a3327; } }
-  * { box-sizing: border-box; }
-  body { margin:0; font-family:"Hiragino Sans","Noto Sans JP",system-ui,sans-serif; background:var(--bg); color:var(--fg); line-height:1.7; }
-  a { color:var(--fg); }
-  a:visited { color:var(--fg); }
-  main { max-width:820px; margin:0 auto; padding:2.5rem 1.25rem 5rem; }
-  header { text-align:center; margin-bottom:1.25rem; }
-  header h1 { font-size:2rem; margin:0 0 .4rem; letter-spacing:-.02em; }
-  header h1 span { color:var(--accent); }
-  header p { color:var(--muted); margin:0; }
-  .blog-link { text-align:center; font-size:.85rem; margin:0 0 1rem; }
-  .blog-link a { color:var(--accent-2); text-decoration:none; font-weight:600; }
-  .quick-links { text-align:center; margin-bottom:2rem; }
-  .quick-links a { display:inline-block; text-decoration:none; font-weight:600; background:var(--accent-2); color:#fff; border-radius:999px; padding:.55rem 1.4rem; margin:.2rem; font-size:.9rem; }
-  section.block { background:var(--bg-card); border:1px solid var(--border); border-radius:.9rem; padding:1.25rem 1.75rem; margin:2rem 0; }
-  section.block h2 { font-size:1.1rem; margin:0 0 .75rem; color:var(--accent-2); }
-  section.block p { margin:0 0 1rem; }
-  section.block p:last-child { margin-bottom:0; }
-  .app-list, .muni-list { margin:0; padding-left:1.2rem; }
-  .app-list li, .muni-list li { margin-bottom:.6rem; }
-  .muni-group { margin-bottom:1.1rem; }
-  .muni-group h3 { font-size:.92rem; margin:0 0 .4rem; color:var(--muted); }
-  .muni-group ul { margin:0; padding-left:1.2rem; }
-  .muni-group li { margin-bottom:.35rem; }
-  .pending { color:var(--muted); font-style:italic; }
-  .search-links { font-size:.85rem; color:var(--muted); margin:.3rem 0 1.1rem; }
-  .search-links a { color:var(--accent-2); text-decoration:none; font-weight:600; }
-  .drone-placeholder { background:rgba(148,163,184,.12); border:1px dashed var(--border); border-radius:.6rem; padding:1rem 1.25rem; color:var(--muted); font-size:.9rem; }
-  .org-link { text-align:center; margin:2rem 0; }
-  .org-link a { color:var(--accent-2); font-weight:600; text-decoration:none; }
-  footer { text-align:center; color:var(--muted); font-size:.8rem; margin-top:3rem; }
-"#;
 
 pub(crate) fn html_escape(s: &str) -> String {
     s.replace('&', "&amp;")
@@ -576,94 +542,38 @@ See <a href="https://github.com/aon-co-jp/open-easy-web" target="_blank" rel="no
         .to_string()
 }
 
-/// TOPページのHTML本文を生成する(純粋関数、テスト容易)。
+/// TOPページ(`/`)はリクエスト時点で変化するデータを一切持たない完全な
+/// 静的ページのため、`static/index.html`として事前生成済みのファイルを
+/// そのまま返す(`aon-tokyo`の`serve_known_asset`と同じ配信パターン)。
+/// この関数はディスクから読み込むだけで、HTML文字列を毎回組み立てる旧来の
+/// 処理は行わない(テストからも同じ内容を検証できるよう`pub`のまま残す)。
 pub fn top_page_html() -> String {
-    format!(
-        r##"<!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>runo.tokyo | 東京都西部の暮らしとテレワーク、open-cosmoエコシステム</title>
-<meta name="description" content="東京都西部各自治体へのリンク集、企業・工場・倉庫事業用地のドローン空撮紹介、そしてopen-aruaru/open-cosmoエコシステムのアプリ一覧を掲載するruno.tokyoのTOPページ。Rust + Poem製。">
-<style>{STYLE}</style>
-</head>
-<body>
-<main>
-{cancer_news}
-<p class="blog-link"><a href="{blog_url}" target="_blank" rel="noopener">📝 {blog_title_ja}</a> / <a href="{blog_url}" target="_blank" rel="noopener">{blog_title_en}</a></p>
-<p class="blog-link"><a href="{blog_url2}" target="_blank" rel="noopener">📝 {blog_title2_ja}</a></p>
-<header>
-  <h1><span>runo</span>.tokyo</h1>
-  <p>東京都西部の暮らし・テレワークと、open-cosmoエコシステムの入口</p>
-  <p class="lang">runo.tokyoは、東京都あきる野市を走って巡回する「るのバス」にヒントを得て
-  runo(るの).tokyoと名付けました。東京都あきる野市を含む東京都と軽井沢と世界を
-  オンラインでつなぎ、郊外でAUDIOでも心地良く聴きながらリモートワークや
-  テレワークする生活はいかがですか？</p>
-  <p class="lang" style="font-size:0.85rem;">🔗 関連サイト / Related sites:
-  <a href="https://aon.tokyo/">aon.tokyo</a> ・
-  <a href="https://aon.tokyo/cancer">aon.tokyo/cancer</a> ・
-  <a href="https://aon.co.jp/">aon.co.jp</a> ・
-  <a href="https://aruaru.tokyo/">aruaru.tokyo</a> ・
-  <a href="https://karu.tokyo/">karu.tokyo</a> ・
-  <a href="https://icpo.tokyo/">icpo.tokyo</a> ・
-  <a href="https://fbi.tokyo/">fbi.tokyo</a> ・
-  <a href="https://runo.tokyo/">runo.tokyo</a></p>
-</header>
+    std::fs::read_to_string("static/index.html").expect("static/index.html should exist (run cargo build from the repository root)")
+}
 
-{easy_free_domain_top}
-
-{karu_tokyo_links}
-
-<div class="quick-links">
-  <a href="#municipalities">自治体リンク集</a>
-  <a href="#drone">ドローン空撮紹介</a>
-  <a href="/runo">📚 プロジェクトシリーズ</a>
-</div>
-
-{catchcopy}
-
-{intro}
-
-{municipalities}
-
-{drone}
-
-{apps}
-
-{subservices}
-
-{free_subdomain}
-
-{runo_link}
-
-<footer>&copy; 2026 runo.tokyo (Rust + Poem)</footer>
-</main>
-</body>
-</html>"##,
-        STYLE = STYLE,
-        cancer_news = render_cancer_news_section(),
-        blog_url = BLOG_POST_URL,
-        blog_title_ja = html_escape(BLOG_POST_TITLE_JA),
-        blog_title_en = html_escape(BLOG_POST_TITLE_EN),
-        blog_url2 = BLOG_POST2_URL,
-        blog_title2_ja = html_escape(BLOG_POST2_TITLE_JA),
-        easy_free_domain_top = render_easy_free_domain_top_banner(),
-        karu_tokyo_links = render_karu_tokyo_links(),
-        catchcopy = render_catchcopy_section(),
-        intro = render_intro_section(),
-        municipalities = render_municipality_section(),
-        drone = render_drone_section(),
-        apps = render_app_directory_section(),
-        subservices = render_subservices_section(),
-        free_subdomain = render_free_subdomain_banner(),
-        runo_link = render_runo_link_section(),
-    )
+async fn serve_static_file(path: &'static str, content_type: &'static str) -> Response {
+    match tokio::fs::read(path).await {
+        Ok(bytes) => Response::builder().header("Content-Type", content_type).body(bytes),
+        Err(e) => {
+            tracing::warn!(path, error = %e, "failed to read static asset");
+            StatusCode::NOT_FOUND.into_response()
+        }
+    }
 }
 
 #[handler]
-fn index_handler() -> impl IntoResponse {
-    Html(top_page_html())
+async fn index_handler() -> Response {
+    serve_static_file("static/index.html", "text/html; charset=utf-8").await
+}
+
+#[handler]
+async fn style_css_handler() -> Response {
+    serve_static_file("static/style.css", "text/css; charset=utf-8").await
+}
+
+#[handler]
+async fn runo_js_handler() -> Response {
+    serve_static_file("static/runo.js", "text/javascript; charset=utf-8").await
 }
 
 #[derive(Deserialize)]
@@ -725,6 +635,8 @@ async fn ec_page(Query(q): Query<LangQuery>) -> Html<String> {
 pub fn build_app() -> Route {
     Route::new()
         .at("/", get(index_handler))
+        .at("/style.css", get(style_css_handler))
+        .at("/runo.js", get(runo_js_handler))
         .at("/runo", get(runo_index_page))
         .at("/chiketto", get(chiketto_page))
         .at("/blog", get(blog_page))
@@ -1020,8 +932,13 @@ mod tests {
         let html = meta_index::render_page(i18n::Lang::Ja, "/runo");
         assert!(html.contains(r#"class="file-tree""#));
         assert!(html.contains("data-repo-tree"));
-        assert!(html.contains("fetchFileTree"));
-        assert!(html.contains("/contents/"));
+        // 実際の`fetchFileTree`関数本体は`static/runo.js`へ切り出し済み
+        // (delivery-mechanism refactor、`<script src="/runo.js" defer>`経由で
+        // 読み込む)。HTML側はそのフックの読み込みだけを確認する。
+        assert!(html.contains(r#"<script src="/runo.js" defer></script>"#));
+        let js = std::fs::read_to_string("static/runo.js").expect("static/runo.js should exist");
+        assert!(js.contains("fetchFileTree"));
+        assert!(js.contains("/contents/"));
     }
 
     /// TOPページ(`/`)の`/runo`リンクをクリックして遷移した瞬間、手動操作
@@ -1032,8 +949,10 @@ mod tests {
     #[test]
     fn runo_index_page_auto_fetches_all_repos_on_load() {
         let html = meta_index::render_page(i18n::Lang::Ja, "/runo");
-        assert!(html.contains("querySelectorAll('.repo-card')"));
-        assert!(html.contains("setTimeout"));
+        assert!(html.contains(r#"<script src="/runo.js" defer></script>"#));
+        let js = std::fs::read_to_string("static/runo.js").expect("static/runo.js should exist");
+        assert!(js.contains("querySelectorAll('.repo-card')"));
+        assert!(js.contains("setTimeout"));
     }
 
     /// クリック時・ページ読み込み時に、紹介文(role)がGitHubのREADME.mdの
@@ -1044,14 +963,18 @@ mod tests {
     fn runo_index_page_syncs_role_text_with_github_readme() {
         let html = meta_index::render_page(i18n::Lang::Ja, "/runo");
         assert!(html.contains("data-repo-role="));
-        assert!(html.contains("fetchReadmeSummary"));
-        assert!(html.contains("raw.githubusercontent.com"));
+        assert!(html.contains(r#"<script src="/runo.js" defer></script>"#));
+        let js = std::fs::read_to_string("static/runo.js").expect("static/runo.js should exist");
+        assert!(js.contains("fetchReadmeSummary"));
+        assert!(js.contains("raw.githubusercontent.com"));
     }
 
     #[test]
     fn subservice_page_syncs_role_text_with_github_readme() {
         let html = meta_index::render_single_project_page("aon-co-jp/RS-Red", i18n::Lang::Ja).expect("project should exist");
         assert!(html.contains("data-repo-role="));
-        assert!(html.contains("fetchReadmeSummary"));
+        assert!(html.contains(r#"<script src="/runo.js" defer></script>"#));
+        let js = std::fs::read_to_string("static/runo.js").expect("static/runo.js should exist");
+        assert!(js.contains("fetchReadmeSummary"));
     }
 }
