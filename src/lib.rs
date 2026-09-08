@@ -287,13 +287,36 @@ fn render_image_and_youtube_link_set(query: &str) -> String {
 /// - キャッチコピー本文 → Google検索・YouTube検索リンク
 /// - 「親子でパソコンを教えながらテレワークする」写真 → 画像検索・YouTube検索リンク
 /// - 「巨大なスピーカー」 → 画像検索・YouTube検索リンク
+/// 新規事業提案(不動産電子契約・AUDIOルーム/シアタールームリフォーム・
+/// 各種保険・酪農家黒字化の人工授精士の話・排水溝リサイクル企画)の
+/// 日本語原文(2026-09-09追加、ユーザー指示による全文そのまま掲載)。
+const PROPOSAL_TEXT_JA_1: &str = "新規提案として、Amazon倉庫、コンビニ、スーパーなどのコーヒーの自動販売機コーナーや、イートインコーナーなどで、新規企画で始められるなら不動産の売買、賃貸などの電子契約、建設会社＆AUDIOルーム、IMAXシアターや4DXシアターの家庭版や住宅の壁や天井にスピーカーを埋め込んで映画館の様にリフォームしたり、それを一戸建て注文住宅として建設する工務店サービス、それを本物の映画館やコンサートホールとして建設する建設会社のサービス。AFLACやNISSAYやSONY損保などの人間やペットや火災保険、地震保険、自動車保険、ちなみに海外の自動車保険のセールスマンは自動車の新車も中古車の売買も行ないますし、お買い得な売出し中の一戸建て注文住宅も、建売物件もご紹介可能らしいです。";
+
+const PROPOSAL_TEXT_JA_2: &str = "ちなみ、先祖にレモン牛乳を作った関東牛乳の創業者がいますが、酪農家が黒字になる話として、まずは、人工授精士と言う資格の講座を受講して頂き、一生懸命ノートに講座の内容を書いてメモして、そしてTESTを受けてみごと合格して頂き、和牛の精子と卵子の受精卵を乳牛のメスに移植して妊娠すれば、乳牛が和牛と乳牛の両方の子牛を出産して牛乳とそれらの加工品と合わせて出荷する事で、酪農家が黒字なりやすいです。と言うお話もしておきます。ちなみに北海道くらい広い土地なら、なるべくフラットに平らに整地して、冬の豪雪が解けるタイミングで放牧の牛糞と雪が解けていっしょになると処理が大変な時に、あらかじめ、泥もじゃりも一緒に流し込めて、リサイクル土や肥料として出荷して販売してもらう前提で、排水溝や下水溝を建設する企画もご提案しておきます。";
+
+/// 上記の日本語原文をユーザー指示により英訳したもの(機械的な逐語訳では
+/// なく、意味が伝わる自然な英文への翻訳)。
+const PROPOSAL_TEXT_EN_1: &str = "As a new business proposal: at coffee vending-machine corners and eat-in areas inside Amazon warehouses, convenience stores, supermarkets and the like, new ventures could be launched — electronic contracts for real-estate sales and rentals; construction companies paired with audio rooms; home versions of IMAX or 4DX theaters, or renovation services that embed speakers into a house's walls and ceiling to turn it into a movie-theater-like space; local builders (koumuten) offering this as a custom-built house; and construction companies offering it as an actual movie theater or concert hall. Insurance such as AFLAC, Nissay, and Sony Sompo for people and pets, fire insurance, earthquake insurance, and auto insurance — incidentally, overseas auto-insurance salespeople reportedly also handle both new- and used-car sales, and can apparently introduce good-deal custom-order houses currently on the market as well as ready-built (spec) homes.";
+
+const PROPOSAL_TEXT_EN_2: &str = "By the way, one of my ancestors founded Kanto Milk, maker of \"lemon milk.\" Here's a story about how dairy farmers can turn a profit: first, take a course toward the \"artificial-insemination technician\" qualification, diligently write notes on the course content, sit the test, and pass it. Then, by implanting into a female dairy cow a fertilized egg made from Wagyu sperm and egg and having her become pregnant, the dairy cow gives birth to a calf that is part Wagyu and part dairy breed, and by shipping both the milk and these processed products together, it becomes much easier for the dairy farmer to turn a profit. I'll mention that as well. Also, on land as vast as Hokkaido, I'd propose leveling the ground as flat as possible, and building drainage/sewer channels designed so that, when winter's heavy snow melts and mixes with grazing cattle manure (which then becomes hard to handle), mud and gravel can be flushed in together too — on the premise that the resulting mixture is shipped and sold as recycled soil or fertilizer.";
+
+const PROPOSAL_TEXT_JA_3: &str = "日本の国土の7割は、山間部でして、植林をさせるのでしたら、杉の木よりも、花粉が舞わないように品種改良してヒノキやその他、丈夫な木で一戸建て注文住宅を建てたい人も多い黒檀やその他、白檀など高級木材は沢山の種類が御座います。日本全国や世界中の材木屋さんや建設会社や工務店や大工さんと業務提携すれば、杉の木よりは、比較的良い値段で売れやすいのではないでしょうか？";
+
+const PROPOSAL_TEXT_EN_3: &str = "About 70% of Japan's land is mountainous. If reforestation is to be carried out, rather than cedar (sugi), there are many other options — hinoki (Japanese cypress) bred not to scatter pollen, and other sturdy woods that many people want for building custom-order houses, as well as high-grade timbers such as ebony and sandalwood, of which there are many varieties. By forming business partnerships with lumber merchants, construction companies, local builders, and carpenters across Japan and around the world, wouldn't these be relatively easier to sell at a better price than cedar?";
+
 fn render_catchcopy_section() -> String {
     format!(
-        r#"<section class="block" id="catchcopy"><h2>runo.tokyoって、どんな場所？</h2><p>{catchcopy}</p>{catchcopy_links}<p>親子でパソコンを教え合いながらテレワーク・リモートワークをする、そんな時間の過ごし方も。</p>{family_links}<p>巨大な壁埋め込みスピーカーで、心地よい音に包まれながら暮らす一戸建て。</p>{speaker_links}</section>"#,
+        r#"<section class="block" id="catchcopy"><h2>runo.tokyoって、どんな場所？</h2><p>{catchcopy}</p>{catchcopy_links}<p>親子でパソコンを教え合いながらテレワーク・リモートワークをする、そんな時間の過ごし方も。</p>{family_links}<p>巨大な壁埋め込みスピーカーで、心地よい音に包まれながら暮らす一戸建て。</p>{speaker_links}<h3>新規事業提案</h3><p>{proposal_ja_1}</p><p>{proposal_ja_2}</p><p>{proposal_ja_3}</p><h3>Proposal (English)</h3><p>{proposal_en_1}</p><p>{proposal_en_2}</p><p>{proposal_en_3}</p></section>"#,
         catchcopy = html_escape(CATCHCOPY),
         catchcopy_links = render_google_youtube_link_set(CATCHCOPY),
         family_links = render_image_and_youtube_link_set("親子 パソコンを教える テレワーク 写真"),
         speaker_links = render_image_and_youtube_link_set("巨大なスピーカー"),
+        proposal_ja_1 = html_escape(PROPOSAL_TEXT_JA_1),
+        proposal_ja_2 = html_escape(PROPOSAL_TEXT_JA_2),
+        proposal_ja_3 = html_escape(PROPOSAL_TEXT_JA_3),
+        proposal_en_1 = html_escape(PROPOSAL_TEXT_EN_1),
+        proposal_en_2 = html_escape(PROPOSAL_TEXT_EN_2),
+        proposal_en_3 = html_escape(PROPOSAL_TEXT_EN_3),
     )
 }
 
