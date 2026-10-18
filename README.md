@@ -157,11 +157,11 @@ checking `releases/latest` per repo (unlike the existing bulk
 `GET /users/aon-co-jp/repos` call) would need one request per repo for
 information that changes far less often than descriptions/stars.
 
-## ƒ‰ƒCƒZƒ“ƒX / License
+## ãƒ©ã‚¤ã‚»ãƒ³ã‚¹ / License
 
-MPL-2.0(LICENSEQÆ)B / MPL-2.0 (see LICENSE).
+MPL-2.0(LICENSEå‚ç…§)ã€‚ / MPL-2.0 (see LICENSE).
 
-## Œ»İ€”õ’†‚Ì€–Ú / Items still marked as 'coming soon'
+## ç¾åœ¨æº–å‚™ä¸­ã®é …ç›® / Items still marked as 'coming soon'
 
-•OŒ´‘º‚ÌŒö®‘ºƒTƒCƒgURLAŠé‹ÆEHêE‘qŒÉ–‹Æ—p’n‚Ìƒhƒ[ƒ“‹óB“®‰æ‚ÍAÀİ‚ÌURLE“®‰æ‚ª–¢’ñ‹Ÿ‚Ì‚½‚ßu€”õ’†v•\¦‚Å‚·(„‘ª‚Å‚Í–„‚ß‚Ü‚¹‚ñ)B / The official Hinohara village URL and the drone footage are shown as 'coming soon' until real URLs/videos are provided.
+æ¡§åŸæ‘ã®å…¬å¼æ‘ã‚µã‚¤ãƒˆURLã€ä¼æ¥­ãƒ»å·¥å ´ãƒ»å€‰åº«äº‹æ¥­ç”¨åœ°ã®ãƒ‰ãƒ­ãƒ¼ãƒ³ç©ºæ’®å‹•ç”»ã¯ã€å®Ÿåœ¨ã®URLãƒ»å‹•ç”»ãŒæœªæä¾›ã®ãŸã‚ã€Œæº–å‚™ä¸­ã€è¡¨ç¤ºã§ã™(æ¨æ¸¬ã§ã¯åŸ‹ã‚ã¾ã›ã‚“)ã€‚ / The official Hinohara village URL and the drone footage are shown as 'coming soon' until real URLs/videos are provided.
 
