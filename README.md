@@ -156,3 +156,12 @@ poll: unauthenticated GitHub API calls are capped at 60/hour, and
 checking `releases/latest` per repo (unlike the existing bulk
 `GET /users/aon-co-jp/repos` call) would need one request per repo for
 information that changes far less often than descriptions/stars.
+
+## ライセンス / License
+
+MPL-2.0(LICENSE参照)。 / MPL-2.0 (see LICENSE).
+
+## 現在準備中の項目 / Items still marked as 'coming soon'
+
+桧原村の公式村サイトURL、企業・工場・倉庫事業用地のドローン空撮動画は、実在のURL・動画が未提供のため「準備中」表示です(推測では埋めません)。 / The official Hinohara village URL and the drone footage are shown as 'coming soon' until real URLs/videos are provided.
+
