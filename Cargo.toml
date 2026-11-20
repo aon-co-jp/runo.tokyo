@@ -16,7 +16,7 @@ serde_json = "1"
 # 定期取得するために使用(`src/github_cache.rs`)。Android等クロスコンパイル時の
 # openssl-sys問題を避けるため、既存エコシステム方針(open-web-server等)に合わせ
 # default-featuresを切り、rustls-tlsを明示指定する。
-reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+reqwest = { version = "0.13", default-features = false, features = ["json", "rustls"] }
 tracing = "0.1"
 tracing-subscriber = "0.3"
 
