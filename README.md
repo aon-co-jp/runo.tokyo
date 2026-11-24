@@ -1,3 +1,5 @@
+> Latest translations / 翻訳の最新版: [0-LATEST-TRANSLATIONS.md](0-LATEST-TRANSLATIONS.md)
+
 # runo.tokyo
 
 東京都西部(あきる野市・旧五日市・桧原村・青梅・奥多摩・羽村・福生・昭島・立川・国立・八王子・高尾・日の出町など)の暮らし・テレワークと、open-runo/open-aruaruエコシステムの入口となるWebサイト。Poem(Rust)製。
